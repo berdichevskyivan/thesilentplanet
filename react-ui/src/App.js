@@ -1,68 +1,84 @@
-import React, { useCallback, useEffect, useState } from 'react';
-import logo from './logo.svg';
+import React from 'react';
+import io from 'socket.io-client';
 import './App.css';
 
-function App() {
-  const [message, setMessage] = useState(null);
-  const [isFetching, setIsFetching] = useState(false);
-  const [url, setUrl] = useState('/api');
+class App extends React.Component {
 
-  const fetchData = useCallback(() => {
-    fetch(url)
-      .then(response => {
-        if (!response.ok) {
-          throw new Error(`status ${response.status}`);
-        }
-        return response.json();
-      })
-      .then(json => {
-        setMessage(json.message);
-        setIsFetching(false);
-      }).catch(e => {
-        setMessage(`API call failed: ${e}`);
-        setIsFetching(false);
-      })
-  }, [url]);
+  constructor(){
+    super();
+    this.state = {
+      inputMessage:'',
+      chatMessages: []
+    }
+    this.socket = null;
+    this.updateInputMessage = this.updateInputMessage.bind(this);
+    this.submitChatMessage = this.submitChatMessage.bind(this);
+  }
 
-  useEffect(() => {
-    setIsFetching(true);
-    fetchData();
-  }, [fetchData]);
+  updateInputMessage(event){
+    var message = event.target.value;
+    this.setState({
+      inputMessage:message
+    });
+  }
 
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        { process.env.NODE_ENV === 'production' ?
-            <p>
-              This is a production build from create-react-app.
-            </p>
-          : <p>
-              Edit <code>src/App.js</code> and save to reload.
-            </p>
-        }
-        <p>{'« '}<strong>
-          {isFetching
-            ? 'Fetching message from API'
-            : message}
-        </strong>{' »'}</p>
-        <p><a
-          className="App-link"
-          href="https://github.com/mars/heroku-cra-node"
-        >
-          React + Node deployment on Heroku
-        </a></p>
-        <p><a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a></p>
-      </header>
-    </div>
-  );
+  submitChatMessage(event){
+    event.preventDefault();
+    var message = this.state.inputMessage;
+    if(message===''){
+      alert('Must write something');
+      return false;
+    }
+    this.socket.emit('chat message',this.state.inputMessage);
+    this.setState({
+      inputMessage:''
+    });
+  }
+
+  componentDidMount(){
+    this.socket = io('ws://localhost:5000', {transports: ['websocket']});
+    const socket = this.socket;
+
+    let newChatMessages = this.state.chatMessages;
+
+    socket.on('chat message', (msg)=>{
+
+      newChatMessages.push({message:msg});
+
+      this.setState({
+        chatMessages:newChatMessages
+      },()=>{
+        var chatDiv = document.getElementById('messages');
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+    });
+  }
+
+  handleKeyPress = (event) => {
+    if(event.key === 'Enter'){
+      this.submitChatMessage(event);
+    }
+  }
+
+  render(){
+
+    const chatMessages = this.state.chatMessages.map((chatMessage, index)=>{
+      return <li key={index}>{chatMessage.message}</li>
+    });
+
+    return (
+      <div className="App">
+        <div className="ConsoleBox">
+          <ul id="messages">
+            { chatMessages }
+          </ul>
+          <div className="inputBox">
+            <input id="m" autoComplete="off" onChange={this.updateInputMessage} value={this.state.inputMessage} onKeyPress={this.handleKeyPress} /><button onClick={this.submitChatMessage}>Send</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
 }
 

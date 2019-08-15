@@ -1,6 +1,6 @@
 {
-  "name": "The Silent Planet",
-  "version": "0.1",
+  "name": "TheSilentPlanet",
+  "version": "0.1.1",
   "description": "A Multiplayer Online RPG Game based in the future",
   "engines": {
     "node": "10.x"
@@ -14,7 +14,9 @@
     "react-ui/node_modules"
   ],
   "dependencies": {
-    "express": "^4.16.4"
+    "express": "^4.16.4",
+    "pg": "^7.12.1",
+    "socket.io": "^2.2.0"
   },
   "repository": {
     "type": "git",

@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
+const socketio = require('socket.io');
+const { Client, Pool } = require('pg');
 
 const isDev = process.env.NODE_ENV !== 'production';
 const PORT = process.env.PORT || 5000;
@@ -22,6 +24,29 @@ if (!isDev && cluster.isMaster) {
 } else {
   const app = express();
 
+  const pool = new Pool({
+    user:'postgres',
+    password:'rakmodar',
+    host:'localhost',
+    database:'thesilentplanet',
+    port:5432
+  });
+
+  (async () => {
+    console.log('starting async query')
+    const { rows } = await pool.query('SELECT NOW()');
+    console.log(rows[0]);
+    console.log('async query finished')
+    console.log('starting callback query')
+    pool.query('SELECT NOW()', (err, res) => {
+      console.log(res);
+      console.log('callback query finished')
+    })
+    console.log('calling end')
+    await pool.end()
+    console.log('pool has drained')
+  })();
+
   // Priority serve any static files.
   app.use(express.static(path.resolve(__dirname, '../react-ui/build')));
 
@@ -36,7 +61,25 @@ if (!isDev && cluster.isMaster) {
     response.sendFile(path.resolve(__dirname, '../react-ui/build', 'index.html'));
   });
 
-  app.listen(PORT, function () {
+  var server = app.listen(PORT, function () {
     console.error(`Node ${isDev ? 'dev server' : 'cluster worker '+process.pid}: listening on port ${PORT}`);
   });
+
+  const io = socketio(server);
+
+  io.on('connection',function(socket){
+
+    console.log('A User connected');
+
+    socket.on('disconnect', function(){
+      console.log('User disconnected');
+    });
+
+    socket.on('chat message', function(msg){
+      console.log('Message sent: '+msg+' -> HOORAY MOTHERFUCKERS!');
+      io.emit('chat message',msg);
+    })
+
+  });
+
 }
