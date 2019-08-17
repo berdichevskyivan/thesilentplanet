@@ -26,7 +26,6 @@ class App extends React.Component {
     event.preventDefault();
     var message = this.state.inputMessage;
     if(message===''){
-      alert('Must write something');
       return false;
     }
     this.socket.emit('chat message',this.state.inputMessage);
@@ -36,7 +35,7 @@ class App extends React.Component {
   }
 
   componentDidMount(){
-    this.socket = io('ws://localhost:5000', {transports: ['websocket']});
+    this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket']});
     const socket = this.socket;
 
     let newChatMessages = this.state.chatMessages;
