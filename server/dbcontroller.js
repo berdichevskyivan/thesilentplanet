@@ -38,8 +38,8 @@ const getPlayerItemsAndEmit = (socket,data)=>{
   });
 }
 
-const getZoneInformationAndEmit = (socket,data)=>{
-  pool.query('select * from zones where zone_id in (select current_zone_id from players where player_id=$1)',[data.player_id],(err,res)=>{
+const getZoneInformationAndEmit = (socket,zone_id)=>{
+  pool.query('select * from zones where zone_id=$1',[zone_id],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -48,22 +48,24 @@ const getZoneInformationAndEmit = (socket,data)=>{
   });
 }
 
-const getZoneNPCAndEmit = (socket,data)=>{
-  pool.query('select * from zone_npc where zone_id in (select current_zone_id from players where player_id=$1)',[data.player_id],(err,res)=>{
+const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInFirstZone)=>{
+  pool.query('select b.* from zone_npc a, npc b where a.npc_id = b.npc_id and zone_id=$1 order by random() limit 1',[zone_id],(err,res)=>{
     if(err){
       console.log(err);
     }else{
-      socket.emit('getZoneNPC',res.rows);
+      mobsInFirstZone.push(res.rows[0]);
+      nsp.emit('generateZoneNpc',mobsInFirstZone);
     }
   });
 }
 
-const getZoneResourcesAndEmit = (socket,data)=>{
-  pool.query('select * from zone_resources where zone_id in (select current_zone_id from players where player_id=$1)',[data.player_id],(err,res)=>{
+const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone)=>{
+  pool.query('select * from zone_resources where zone_id=$1 order by random() limit 1',[zone_id],(err,res)=>{
     if(err){
       console.log(err);
     }else{
-      socket.emit('getZoneResources',res.rows);
+      resourcesInFirstZone.push(res.rows[0]);
+      nsp.emit('generateZoneResources',resourcesInFirstZone);
     }
   });
 }
@@ -74,6 +76,6 @@ module.exports = {
   getPlayerResourcesAndEmit:getPlayerResourcesAndEmit,
   getPlayerItemsAndEmit:getPlayerItemsAndEmit,
   getZoneInformationAndEmit:getZoneInformationAndEmit,
-  getZoneNPCAndEmit:getZoneNPCAndEmit,
-  getZoneResourcesAndEmit:getZoneResourcesAndEmit
+  getNpcFromZoneAndEmit:getNpcFromZoneAndEmit,
+  getResourceFromZoneAndEmit:getResourceFromZoneAndEmit
 }

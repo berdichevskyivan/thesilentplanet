@@ -1,5 +1,6 @@
 import React from 'react';
 import io from 'socket.io-client';
+import EnemyCard from './EnemyCard';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import videoPath from './resources/video/tropical.mp4';
@@ -9,11 +10,13 @@ class App extends React.Component {
   constructor(){
     super();
     this.state = {
+      mouseIsOver:false,
       playerInfo:null,
       playerResources:[],
       playerItems:[],
       inputMessage:'',
-      chatMessages:[]
+      chatMessages:[],
+      npcInZone:[]
     }
     this.socket = null;
     this.updateInputMessage = this.updateInputMessage.bind(this);
@@ -40,8 +43,19 @@ class App extends React.Component {
   }
 
   componentDidMount(){
+
+    var item = document.getElementsByClassName('NpcZone')[0];
+
+    window.addEventListener('wheel', (e)=>{
+      if(this.state.mouseIsOver){
+        if (e.deltaY > 0) item.scrollLeft += 50;
+        else item.scrollLeft -= 50;
+      }
+    });
+
     this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket']});
     const socket = this.socket;
+    const zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket']});
 
     let newChatMessages = this.state.chatMessages;
 
@@ -59,18 +73,6 @@ class App extends React.Component {
       console.log(data);
     });
 
-    socket.on('getZoneInformation',function(data){
-      console.log(data);
-    });
-
-    socket.on('getZoneNPC',function(data){
-      console.log(data);
-    });
-
-    socket.on('getZoneResources',function(data){
-      console.log(data);
-    });
-
     socket.on('chat message', (msg)=>{
 
       newChatMessages.push({message:msg});
@@ -82,6 +84,17 @@ class App extends React.Component {
         chatDiv.scrollTop = chatDiv.scrollHeight;
       });
     });
+
+    zoneSocket.on('generateZoneNpc',(data)=>{
+      this.setState({
+        npcInZone:data
+      });
+    });
+
+    zoneSocket.on('generateZoneResources',function(data){
+      console.log(data);
+    });
+
   }
 
   handleKeyPress = (event) => {
@@ -95,6 +108,8 @@ class App extends React.Component {
     const chatMessages = this.state.chatMessages.map((chatMessage, index)=>{
       return <li key={index}>{chatMessage.message}</li>
     });
+
+    const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
 
     return (
       <div className="App">
@@ -116,7 +131,10 @@ class App extends React.Component {
             <div className="col-md-8 col-sm-8 worldcolumn">
               <div className="row ResourceZone">
               </div>
-              <div className="row NpcZone">
+              <div className="row NpcZone" style={rowOrColumn} onMouseOver={ ()=>{this.setState({mouseIsOver:true})}} onMouseOut={()=>{this.setState({mouseIsOver:false})}} >
+                { this.state.npcInZone.map((npc)=>{
+                  return <EnemyCard npc={npc} />
+                }) }
               </div>
             </div>
             <div className="col-md-2 col-sm-2 worldcolumn">

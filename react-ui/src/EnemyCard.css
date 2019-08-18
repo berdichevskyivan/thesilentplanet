@@ -1,0 +1,100 @@
+.EnemyCard {
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 300px;
+  padding: 5px;
+  background: #000303ba;
+  margin-left: 10px;
+}
+
+.EnemyImageRow {
+  height: 60%;
+  width: 100%;
+  max-width: 100%;
+}
+
+.EnemyImageRow img {
+  height: 100%;
+  width: 100%;
+}
+
+.EnemyTitleRow {
+  height: 15%;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.EnemyTitleRow p {
+  font-weight: bold;
+  color: lime;
+}
+
+.EnemyStatsRow {
+  height: 15%;
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+  align-items: center;
+  flex-flow: column;
+}
+
+.StabilityBar {
+  height: 35%;
+  width: 100%;
+  background: lime;
+}
+
+.StatsBar {
+  height: 65%;
+  width: 100%;
+}
+
+.StatColumn {
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  padding-top: 5px;
+  padding-bottom: 5px;
+}
+
+.StatColumn img {
+  width: 20%%;
+  height: 90%;
+  max-width: 100%;
+  max-height: 100%;
+}
+
+.StatColumn p {
+  color: lime;
+  font-weight: bold;
+  font-size: 22px;
+  margin-left: 5px !important;
+}
+
+.EnemyActionsRow {
+  height: 10%;
+  width: 100%;
+  max-width: 100%;
+}
+
+.ActionColumn {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.ActionColumn img {
+  height: 60%;
+  width: 100%;
+  max-height: 100%;
+  max-width: 100%;
+}

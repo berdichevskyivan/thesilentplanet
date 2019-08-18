@@ -29,8 +29,8 @@ INSERT INTO zone_npc VALUES
 (2,2);
 
 INSERT INTO npc VALUES
-(1,'Doombringer','Doombringer pursue chaos and destruction above all. Their claws can penetrate every known armor.',20,20,2),
-(2,'Quantum Model XZ','Previous model of Automata created by Humans before their extinction. Now serve as training models.',100,60,5);
+(1,'Doombringer','Doombringer pursue chaos and destruction above all. Their claws can penetrate every known armor.',20,20,2,'./resources/images/npc/doombringer.jpg'),
+(2,'Quantum Model XZ','Previous model of Automata created by Humans before their extinction. Now serve as training models.',100,60,5,'./resources/images/npc/quantummodel.jpg');
 
 INSERT INTO npc_resources VALUES
 (1,1,2),

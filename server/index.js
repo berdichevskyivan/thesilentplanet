@@ -65,11 +65,33 @@ if (!isDev && cluster.isMaster) {
       db.getPlayerInfoAndEmit(socket,data);
       db.getPlayerResourcesAndEmit(socket,data);
       db.getPlayerItemsAndEmit(socket,data);
-      db.getZoneInformationAndEmit(socket,data);
-      db.getZoneNPCAndEmit(socket,data);
-      db.getZoneResourcesAndEmit(socket,data);
     });
 
+  });
+
+  const firstZoneNsp = io.of('/first-zone-namespace');
+  const mobsInFirstZone = [];
+  const resourcesInFirstZone = [];
+
+  const mobSpawn = (nsp,mobsInFirstZone)=>{
+    setInterval(()=>{
+      console.log('Generating Mob for Zone 1');
+      db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone);
+    },5000);
+  };
+
+  const resourceSpawn = (nsp,resourcesInFirstZone)=>{
+    setInterval(()=>{
+      console.log('Generating Resource for Zone 1');
+      db.getResourceFromZoneAndEmit(1,nsp,resourcesInFirstZone);
+    },20000);
+  };
+
+  mobSpawn(firstZoneNsp,mobsInFirstZone);
+  resourceSpawn(firstZoneNsp,resourcesInFirstZone);
+
+  firstZoneNsp.on('connection',function(socket){
+    console.log('Someone joined the First Zone');
   });
 
 }

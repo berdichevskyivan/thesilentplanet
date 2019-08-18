@@ -57,7 +57,8 @@ CREATE TABLE npc (
   npc_text TEXT,
   currency SMALLINT,
   stability SMALLINT,
-  attack_power SMALLINT
+  attack_power SMALLINT,
+  img_url TEXT
 );
 
 CREATE TABLE npc_resources (
