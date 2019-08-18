@@ -3,7 +3,8 @@ const path = require('path');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
 const socketio = require('socket.io');
-const { Client, Pool } = require('pg');
+//const { Client, Pool } = require('pg');
+const db = require('./dbcontroller.js');
 
 const isDev = process.env.NODE_ENV !== 'production';
 const PORT = process.env.PORT || 5000;
@@ -23,14 +24,6 @@ if (!isDev && cluster.isMaster) {
 
 } else {
   const app = express();
-
-  const pool = new Pool({
-    user:'postgres',
-    password:'rakmodar',
-    host:'localhost',
-    database:'thesilentplanet',
-    port:5432
-  });
 
   // Priority serve any static files.
   app.use(express.static(path.resolve(__dirname, '../react-ui/build')));
@@ -62,9 +55,19 @@ if (!isDev && cluster.isMaster) {
       console.log('User disconnected');
     });
 
+    //GLOBAL
     socket.on('chat message', function(msg){
       console.log('Message sent: '+msg);
       io.emit('chat message',msg);
+    });
+
+    socket.on('getPlayerInformation',function(data){
+      db.getPlayerInfoAndEmit(socket,data);
+      db.getPlayerResourcesAndEmit(socket,data);
+      db.getPlayerItemsAndEmit(socket,data);
+      db.getZoneInformationAndEmit(socket,data);
+      db.getZoneNPCAndEmit(socket,data);
+      db.getZoneResourcesAndEmit(socket,data);
     });
 
   });

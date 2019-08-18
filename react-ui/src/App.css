@@ -1,40 +1,118 @@
-.App {
+.App, body, html, div#root, .container-fluid{
+  height: 100%;
+}
 
+p {
+  margin: 0 !important;
+}
+
+#myVideo {
+  min-width: 100%;
+  min-height: 100%;
+}
+
+.container-fluid {
+  overflow: hidden;
+  padding: 0 !important;
+}
+
+.Footer {
+  height: 30%;
+}
+
+.WorldView {
+  height: 70%;
+}
+
+.worldcolumn {
+  padding: 0 !important;
+}
+
+.column, .tabcolumn {
+  height: 100%;
+  padding: 0 !important;
+  border-left: 1px solid lime;
+}
+
+.tabcolumn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
 }
 
 .ConsoleBox {
-  width: 800px;
-  height: 400px;
-  position: fixed;
-  bottom: 0;
-  left: 50%;
-  margin-left: -400px;
   overflow: hidden;
   display: flex;
   flex-flow: column;
+  height: 100%;
 }
 
-@media screen and (max-width: 600px) {
-  .ConsoleBox {
-    width: 100%;
-    height: 100%;
-    border: 2px solid black;
-    margin-bottom: 0px;
-    margin-left: 0px;
-    left: 0;
-    overflow: hidden;
-    display: flex;
-    flex-flow: column;
-  }
+.Tabs {
+  height: 15%;
+  background:#000000db;
+  color: lime;
+  width: 100%;
+  margin: 0 !important;
+  border-bottom: 1px solid lime;
+  border-top: 1px solid lime;
+}
+
+.WorldViewTabs {
+  height: 5%;
+  background:#000000db;
+  color: lime;
+  width: 100%;
+  margin: 0 !important;
+  border-bottom: 1px solid lime;
+}
+
+.worldviewtab {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.CurrentPlayers, .OtherZones {
+  height: 95%;
+  background: #000000db;
+  color: lime;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.InformationBox {
+  height: 85%;
+  background: #000000db;
+  color: lime;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.NpcZone {
+  height: 70%;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.ResourceZone {
+  height: 30%;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.InfoBox {
 }
 
 .inputBox {
-  border-top: 2px solid lime;
+  border-top: 1px solid lime;
 }
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font: 13px Helvetica, Arial; }
-input { border: 0; padding: 10px; float:left ; width: 80%; background: black; color: lime; font-family: monospace; font-size: 18px; outline: none;}
-button { float:right; background: black; color: lime; border: none; padding: 10px; width: 20% ; height: 100%; cursor: pointer; outline: none; border-left:2px solid lime; font-size: 18px; font-family: monospace;}
-#messages { list-style-type: none; margin: 0; padding: 0; height: 100%; overflow: auto; background: black}
-#messages li { padding: 6px 10px; color: lime; font-family: monospace; font-size: 18px}
+input { border: 0; padding: 10px; float:left ; width: 80%; background: #000000db; color: lime; font-family: monospace !important; font-size: 16px !important; outline: none;}
+button { float:right; background: #000000db; color: lime; border: none; padding: 10px; width: 20% ; height: 100%; cursor: pointer; outline: none; border-left:1px solid lime; font-size: 18px; font-family: monospace;}
+#messages { list-style-type: none; margin: 0; padding: 0; height: 100%; overflow: auto; background: #000000db}
+#messages li { padding: 6px 10px; color: lime; font-family: monospace; font-size: 16px}
+
+.equipmentTab { border-left:none !important; }
