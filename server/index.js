@@ -77,7 +77,7 @@ if (!isDev && cluster.isMaster) {
     setInterval(()=>{
       console.log('Generating Mob for Zone 1');
       db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone);
-    },5000);
+    },60000);
   };
 
   const resourceSpawn = (nsp,resourcesInFirstZone)=>{
@@ -91,6 +91,7 @@ if (!isDev && cluster.isMaster) {
   resourceSpawn(firstZoneNsp,resourcesInFirstZone);
 
   firstZoneNsp.on('connection',function(socket){
+    db.getZoneInformationAndEmit(socket,1);
     console.log('Someone joined the First Zone');
   });
 

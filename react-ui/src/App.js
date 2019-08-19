@@ -1,9 +1,11 @@
 import React from 'react';
 import io from 'socket.io-client';
 import EnemyCard from './EnemyCard';
+import PersonalInfo from './PersonalInfo';
+import ZoneInfo from './ZoneInfo';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import videoPath from './resources/video/tropical.mp4';
+import videoPath from './resources/video/forest.mp4';
 
 class App extends React.Component {
 
@@ -14,9 +16,12 @@ class App extends React.Component {
       playerInfo:null,
       playerResources:[],
       playerItems:[],
+      zoneInfo:null,
       inputMessage:'',
       chatMessages:[],
-      npcInZone:[]
+      npcInZone:[],
+      showPersonalInfo:true,
+      showZoneInfo:false
     }
     this.socket = null;
     this.updateInputMessage = this.updateInputMessage.bind(this);
@@ -61,8 +66,10 @@ class App extends React.Component {
 
     socket.emit('getPlayerInformation',{player_id:1});
 
-    socket.on('getPlayerInformation',function(data){
-      console.log(data);
+    socket.on('getPlayerInformation',(data)=>{
+      this.setState({
+        playerInfo:data
+      });
     });
 
     socket.on('getPlayerResources',function(data){
@@ -82,6 +89,12 @@ class App extends React.Component {
       },()=>{
         var chatDiv = document.getElementById('messages');
         chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+    });
+
+    zoneSocket.on('getZoneInformation',(data)=>{
+      this.setState({
+        zoneInfo:data
       });
     });
 
@@ -119,7 +132,7 @@ class App extends React.Component {
             <source src={videoPath} type="video/mp4" />
           </video>
           <div className="row WorldView fixed-top">
-            <div className="col-md-2 col-sm-2 worldcolumn">
+            <div className="col-md-2 col-sm-2 worldcolumn hideonmobile">
               <div className="row WorldViewTabs">
                 <div className="col-md-12 col-sm-12 worldviewtab">
                   <p>Players Currently in Zone</p>
@@ -137,7 +150,7 @@ class App extends React.Component {
                 }) }
               </div>
             </div>
-            <div className="col-md-2 col-sm-2 worldcolumn">
+            <div className="col-md-2 col-sm-2 worldcolumn hideonmobile">
               <div className="row WorldViewTabs">
                 <div className="col-md-12 col-sm-12 worldviewtab">
                   <p>Other Zones</p>
@@ -148,16 +161,18 @@ class App extends React.Component {
             </div>
           </div>
           <div className="row Footer fixed-bottom">
-            <div className="col-md-4 col-sm-4 column InfoBox">
+            <div className="col-md-4 col-sm-4 column InfoBox hideonmobile">
               <div className="row Tabs">
-                <div className="col-md-6 col-sm-6 tabcolumn">
+                <div className="col-md-6 col-sm-6 tabcolumn" onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
                   <p>Personal Information</p>
                 </div>
-                <div className="col-md-6 col-sm-6 tabcolumn">
+                <div className="col-md-6 col-sm-6 tabcolumn" onClick={()=>{this.setState({ showPersonalInfo:false, showZoneInfo:true })}}>
                   <p>Zone Information</p>
                 </div>
               </div>
               <div className="row InformationBox">
+                {this.state.playerInfo===null ? null : <PersonalInfo player={this.state.playerInfo} show={this.state.showPersonalInfo}/>}
+                {this.state.zoneInfo===null ? null : <ZoneInfo zone={this.state.zoneInfo} show={this.state.showZoneInfo}/>}
               </div>
             </div>
             <div className="col-md-4 col-sm-4 column">
@@ -171,7 +186,7 @@ class App extends React.Component {
                 </div>
               </div>
             </div>
-            <div className="col-md-4 col-sm-4 column">
+            <div className="col-md-4 col-sm-4 column hideonmobile">
               <div className="row Tabs">
                 <div className="col-md-4 col-sm-4 tabcolumn equipmentTab">
                   <p>Equipment</p>

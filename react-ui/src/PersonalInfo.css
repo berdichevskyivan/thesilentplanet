@@ -1,0 +1,38 @@
+.PersonalInfo {
+  height: 100%;
+  width: 100%;
+  font-family: monospace;
+}
+
+.PlayerStatColumn {
+  padding: 0 !important;
+  margin: 0;
+  height: 100%;
+  display: table;
+}
+
+.PlayerStatsList {
+  height:100%;
+}
+
+.PlayerStatsList li {
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+  padding: 5px;
+}
+
+.PlayerStatCell {
+  height: 25%;
+  width: 25%;
+  display: inline-grid;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+  font-weight: bolder;
+}
+
+.StatValue {
+  font-size: 15px;
+}
