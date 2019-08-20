@@ -48,11 +48,15 @@ const getZoneInformationAndEmit = (socket,zone_id)=>{
   });
 }
 
-const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInFirstZone)=>{
+const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInFirstZone,mobCount)=>{
   pool.query('select b.* from zone_npc a, npc b where a.npc_id = b.npc_id and zone_id=$1 order by random() limit 1',[zone_id],(err,res)=>{
     if(err){
       console.log(err);
     }else{
+      console.log('COUNT IS ->'+mobCount);
+      var targetName = res.rows[0].npc_name.toLowerCase().replace(/\s/g, "");
+      res.rows[0].target_name = targetName+'@'+(mobCount+1);
+      res.rows[0].current_stability = res.rows[0].stability;
       mobsInFirstZone.push(res.rows[0]);
       nsp.emit('generateZoneNpc',mobsInFirstZone);
     }

@@ -44,6 +44,7 @@ if (!isDev && cluster.isMaster) {
   });
 
   const io = socketio(server);
+  const firstZoneNsp = io.of('/first-zone-namespace');
 
   io.on('connection',function(socket){
 
@@ -55,10 +56,22 @@ if (!isDev && cluster.isMaster) {
       console.log('User disconnected');
     });
 
+    //SENDER
+    socket.on('consoleMessage', function(msg){
+      console.log('Console Message sent: '+msg);
+      socket.emit('consoleMessage',msg);
+    });
+
+    //LOCAL
+    socket.on('localChatMessage', function(msg){
+      console.log('Local Chat Message sent: '+msg);
+      firstZoneNsp.emit('localChatMessage',msg);
+    });
+
     //GLOBAL
-    socket.on('chat message', function(msg){
-      console.log('Message sent: '+msg);
-      io.emit('chat message',msg);
+    socket.on('globalChatMessage', function(msg){
+      console.log('Global Chat Message sent: '+msg);
+      io.emit('globalChatMessage',msg);
     });
 
     socket.on('getPlayerInformation',function(data){
@@ -69,22 +82,25 @@ if (!isDev && cluster.isMaster) {
 
   });
 
-  const firstZoneNsp = io.of('/first-zone-namespace');
   const mobsInFirstZone = [];
   const resourcesInFirstZone = [];
+
+  let mobCount = 0;
+  let resourceCount = 0;
 
   const mobSpawn = (nsp,mobsInFirstZone)=>{
     setInterval(()=>{
       console.log('Generating Mob for Zone 1');
-      db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone);
-    },60000);
+      db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone,mobCount);
+      mobCount++;
+    },20000);
   };
 
   const resourceSpawn = (nsp,resourcesInFirstZone)=>{
     setInterval(()=>{
       console.log('Generating Resource for Zone 1');
       db.getResourceFromZoneAndEmit(1,nsp,resourcesInFirstZone);
-    },20000);
+    },120000);
   };
 
   mobSpawn(firstZoneNsp,mobsInFirstZone);
@@ -93,6 +109,24 @@ if (!isDev && cluster.isMaster) {
   firstZoneNsp.on('connection',function(socket){
     db.getZoneInformationAndEmit(socket,1);
     console.log('Someone joined the First Zone');
+    socket.on('attackNpc',function(data){
+      var attackedNpcIndex=null;
+      var attackedNpc = mobsInFirstZone.find(function(npc,index){
+        if(npc.target_name === data.attackedTarget){
+          attackedNpcIndex=index;
+          return true;
+        }
+      });
+      mobsInFirstZone[attackedNpcIndex].current_stability = mobsInFirstZone[attackedNpcIndex].current_stability - data.spDamage;
+      socket.emit('consoleMessage','You attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
+      firstZoneNsp.emit('localChatMessage',data.attackingUser+' has attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
+      if(mobsInFirstZone[attackedNpcIndex].current_stability<=0){
+        mobsInFirstZone.splice(attackedNpcIndex,1);
+        socket.emit('consoleMessage', data.attackedTarget+' dies.');
+        firstZoneNsp.emit('localChatMessage',data.attackingUser+' deals a killing blow! '+data.attackedTarget+' dies.');
+      }
+      firstZoneNsp.emit('generateZoneNpc',mobsInFirstZone);
+    });
   });
 
 }

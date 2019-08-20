@@ -126,10 +126,10 @@ p {
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font: 13px Helvetica, Arial; }
-input { border: 0; padding: 10px; float:left ; width: 80%; background: #000000db; color: lime; font-family: monospace !important; font-size: 16px !important; outline: none;}
+input { border: 0; height: 100%; padding-left:10px; float:left ; width: 80%; background: #000000db; color: lime; font-family: monospace !important; font-size: 14px !important; outline: none;}
 button { float:right; background: #000000db; color: lime; border: none; padding: 10px; width: 20% ; height: 100%; cursor: pointer; outline: none; border-left:1px solid lime; font-size: 18px; font-family: monospace !important;}
-#messages { list-style-type: none; margin: 0; padding: 0; height: 100%; overflow: auto; background: #000000db}
-#messages li { padding: 6px 10px; color: lime; font-family: monospace; font-size: 16px}
+#consoleMessages, #localChatMessages, #globalChatMessages { list-style-type: none; margin: 0; padding-top: 5px; height: 100%; overflow: auto; background: #000000db}
+#consoleMessages li, #localChatMessages li, #globalChatMessages li { padding: 0px 10px; color: lime; font-family: monospace; font-size: 14px}
 
 .equipmentTab { border-left:none !important; }
 

@@ -3,6 +3,9 @@ import io from 'socket.io-client';
 import EnemyCard from './EnemyCard';
 import PersonalInfo from './PersonalInfo';
 import ZoneInfo from './ZoneInfo';
+import Console from './Console';
+import LocalChat from './LocalChat';
+import GlobalChat from './GlobalChat';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import videoPath from './resources/video/forest.mp4';
@@ -17,33 +20,83 @@ class App extends React.Component {
       playerResources:[],
       playerItems:[],
       zoneInfo:null,
-      inputMessage:'',
-      chatMessages:[],
+      consoleInputMessage:'',
+      localChatInputMessage:'',
+      globalChatInputMessage:'',
+      consoleMessages:[],
+      localChatMessages:[],
+      globalChatMessages:[],
       npcInZone:[],
       showPersonalInfo:true,
-      showZoneInfo:false
+      showZoneInfo:false,
+      showConsole:true,
+      showGlobalChat:false,
+      showLocalChat:false
     }
     this.socket = null;
-    this.updateInputMessage = this.updateInputMessage.bind(this);
-    this.submitChatMessage = this.submitChatMessage.bind(this);
+    this.zoneSocket = null;
+    this.updateConsoleInputMessage = this.updateConsoleInputMessage.bind(this);
+    this.updateLocalChatInputMessage = this.updateLocalChatInputMessage.bind(this);
+    this.updateGlobalChatInputMessage = this.updateGlobalChatInputMessage.bind(this);
+    this.submitConsoleMessage = this.submitConsoleMessage.bind(this);
+    this.submitLocalChatMessage = this.submitLocalChatMessage.bind(this);
+    this.submitGlobalChatMessage = this.submitGlobalChatMessage.bind(this);
   }
 
-  updateInputMessage(event){
+  updateConsoleInputMessage(event){
     var message = event.target.value;
     this.setState({
-      inputMessage:message
+      consoleInputMessage:message
     });
   }
 
-  submitChatMessage(event){
+  updateLocalChatInputMessage(event){
+    var message = event.target.value;
+    this.setState({
+      localChatInputMessage:message
+    });
+  }
+
+  updateGlobalChatInputMessage(event){
+    var message = event.target.value;
+    this.setState({
+      globalChatInputMessage:message
+    });
+  }
+
+  submitConsoleMessage(event){
     event.preventDefault();
-    var message = this.state.inputMessage;
+    var message = this.state.consoleInputMessage;
     if(message===''){
       return false;
     }
-    this.socket.emit('chat message',this.state.inputMessage);
+    this.socket.emit('consoleMessage',message);
     this.setState({
-      inputMessage:''
+      consoleInputMessage:''
+    });
+  }
+
+  submitLocalChatMessage(event){
+    event.preventDefault();
+    var message = this.state.localChatInputMessage;
+    if(message===''){
+      return false;
+    }
+    this.socket.emit('localChatMessage',message);
+    this.setState({
+      localChatInputMessage:''
+    });
+  }
+
+  submitGlobalChatMessage(event){
+    event.preventDefault();
+    var message = this.state.globalChatInputMessage;
+    if(message===''){
+      return false;
+    }
+    this.socket.emit('globalChatMessage',message);
+    this.setState({
+      globalChatInputMessage:''
     });
   }
 
@@ -59,10 +112,9 @@ class App extends React.Component {
     });
 
     this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket']});
+    this.zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket']});
     const socket = this.socket;
-    const zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket']});
-
-    let newChatMessages = this.state.chatMessages;
+    const zoneSocket = this.zoneSocket;
 
     socket.emit('getPlayerInformation',{player_id:1});
 
@@ -80,14 +132,50 @@ class App extends React.Component {
       console.log(data);
     });
 
-    socket.on('chat message', (msg)=>{
-
-      newChatMessages.push({message:msg});
+    socket.on('consoleMessage', (msg)=>{
+      let newConsoleMessages = this.state.consoleMessages;
+      newConsoleMessages.push({message:msg});
 
       this.setState({
-        chatMessages:newChatMessages
+        consoleMessages:newConsoleMessages
       },()=>{
-        var chatDiv = document.getElementById('messages');
+        var chatDiv = document.getElementById('consoleMessages');
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+    });
+
+    zoneSocket.on('consoleMessage', (msg)=>{
+      let newConsoleMessages = this.state.consoleMessages;
+      newConsoleMessages.push({message:msg});
+
+      this.setState({
+        consoleMessages:newConsoleMessages
+      },()=>{
+        var chatDiv = document.getElementById('consoleMessages');
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+    });
+
+    zoneSocket.on('localChatMessage', (msg)=>{
+      let newLocalChatMessages = this.state.localChatMessages;
+      newLocalChatMessages.push({message:msg});
+
+      this.setState({
+        localChatMessages:newLocalChatMessages
+      },()=>{
+        var chatDiv = document.getElementById('localChatMessages');
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+    });
+
+    socket.on('globalChatMessage', (msg)=>{
+      let newGlobalChatMessages = this.state.globalChatMessages;
+      newGlobalChatMessages.push({message:msg});
+
+      this.setState({
+        globalChatMessages:newGlobalChatMessages
+      },()=>{
+        var chatDiv = document.getElementById('globalChatMessages');
         chatDiv.scrollTop = chatDiv.scrollHeight;
       });
     });
@@ -110,17 +198,33 @@ class App extends React.Component {
 
   }
 
-  handleKeyPress = (event) => {
+  handleConsoleKeyPress = (event) => {
     if(event.key === 'Enter'){
-      this.submitChatMessage(event);
+      this.submitConsoleMessage(event);
     }
   }
 
-  render(){
+  handleLocalChatKeyPress = (event) => {
+    if(event.key === 'Enter'){
+      this.submitLocalChatMessage(event);
+    }
+  }
 
-    const chatMessages = this.state.chatMessages.map((chatMessage, index)=>{
-      return <li key={index}>{chatMessage.message}</li>
+  handleGlobalChatKeyPress = (event) => {
+    if(event.key === 'Enter'){
+      this.submitGlobalChatMessage(event);
+    }
+  }
+
+  attackNpc = (targetName)=>{
+    this.zoneSocket.emit('attackNpc',{
+      attackingUser:this.state.playerInfo.player_name,
+      attackedTarget:targetName,
+      spDamage:1
     });
+  }
+
+  render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
 
@@ -146,7 +250,7 @@ class App extends React.Component {
               </div>
               <div className="row NpcZone" style={rowOrColumn} onMouseOver={ ()=>{this.setState({mouseIsOver:true})}} onMouseOut={()=>{this.setState({mouseIsOver:false})}} >
                 { this.state.npcInZone.map((npc)=>{
-                  return <EnemyCard npc={npc} />
+                  return <EnemyCard npc={npc} attackNpc={this.attackNpc} />
                 }) }
               </div>
             </div>
@@ -177,12 +281,23 @@ class App extends React.Component {
             </div>
             <div className="col-md-4 col-sm-4 column">
               <div className="ConsoleBox">
-                <ul id="messages">
-                  { chatMessages }
-                </ul>
-                <div className="inputBox">
-                  <input id="m" autoComplete="off" onChange={this.updateInputMessage} value={this.state.inputMessage} onKeyPress={this.handleKeyPress} />
-                  <button style={ { outline:'none' } } onClick={this.submitChatMessage}>Send</button>
+                <Console show={this.state.showConsole} consoleMessages={this.state.consoleMessages} updateConsoleInputMessage={this.updateConsoleInputMessage}
+                         consoleInputMessage={this.state.consoleInputMessage} handleConsoleKeyPress={this.handleConsoleKeyPress} submitConsoleMessage={this.submitConsoleMessage} />
+                <LocalChat show={this.state.showLocalChat} localChatMessages={this.state.localChatMessages} updateLocalChatInputMessage={this.updateLocalChatInputMessage}
+                           localChatInputMessage={this.state.localChatInputMessage} handleLocalChatKeyPress={this.handleLocalChatKeyPress} submitLocalChatMessage={this.submitLocalChatMessage}/>
+                <GlobalChat show={this.state.showGlobalChat} globalChatMessages={this.state.globalChatMessages} updateGlobalChatInputMessage={this.updateGlobalChatInputMessage}
+                            globalChatInputMessage={this.state.globalChatInputMessage} handleGlobalChatKeyPress={this.handleGlobalChatKeyPress} submitGlobalChatMessage={this.submitGlobalChatMessage}/>
+                <div className="row Tabs">
+                  <div className="col-md-4 col-sm-4 tabcolumn equipmentTab" style={this.state.showLocalChat ? { 'background':'#00ff0091', 'color':'white'} : {} }
+                                                                            onClick={()=>{this.setState({ showConsole:false, showLocalChat:true, showGlobalChat:false })}}>
+                    <p>Local Chat</p>
+                  </div>
+                  <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showConsole ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showConsole:true, showLocalChat:false, showGlobalChat:false })}}>
+                    <p>Console</p>
+                  </div>
+                  <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showGlobalChat ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showConsole:false, showLocalChat:false, showGlobalChat:true })}}>
+                    <p>Global Chat</p>
+                  </div>
                 </div>
               </div>
             </div>
