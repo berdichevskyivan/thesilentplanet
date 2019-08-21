@@ -47,13 +47,18 @@ if (!isDev && cluster.isMaster) {
   const firstZoneNsp = io.of('/first-zone-namespace');
 
   io.on('connection',function(socket){
-
-    const socketID = socket.id;
-
-    console.log('A User connected');
+    socket.username = socket.handshake.query.username;
+    console.log('User '+socket.username+' has connected.');
 
     socket.on('disconnect', function(){
       console.log('User disconnected');
+    });
+
+    socket.on('getPlayerInformation',function(data){
+      db.getPlayerInfoAndEmit(socket,data);
+      db.getPlayerEquipmentAndEmit(socket,data);
+      db.getPlayerResourcesAndEmit(socket,data);
+      db.getPlayerItemsAndEmit(socket,data);
     });
 
     //SENDER
@@ -74,12 +79,6 @@ if (!isDev && cluster.isMaster) {
       io.emit('globalChatMessage',msg);
     });
 
-    socket.on('getPlayerInformation',function(data){
-      db.getPlayerInfoAndEmit(socket,data);
-      db.getPlayerResourcesAndEmit(socket,data);
-      db.getPlayerItemsAndEmit(socket,data);
-    });
-
   });
 
   const mobsInFirstZone = [];
@@ -93,7 +92,7 @@ if (!isDev && cluster.isMaster) {
       console.log('Generating Mob for Zone 1');
       db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone,mobCount);
       mobCount++;
-    },20000);
+    },120000);
   };
 
   const resourceSpawn = (nsp,resourcesInFirstZone)=>{
@@ -107,8 +106,9 @@ if (!isDev && cluster.isMaster) {
   resourceSpawn(firstZoneNsp,resourcesInFirstZone);
 
   firstZoneNsp.on('connection',function(socket){
+    socket.username = socket.handshake.query.username;
+    console.log('User '+socket.username+' has joined the First Zone.');
     db.getZoneInformationAndEmit(socket,1);
-    console.log('Someone joined the First Zone');
     socket.on('attackNpc',function(data){
       var attackedNpcIndex=null;
       var attackedNpc = mobsInFirstZone.find(function(npc,index){

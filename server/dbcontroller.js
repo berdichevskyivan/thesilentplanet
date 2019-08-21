@@ -18,8 +18,22 @@ const getPlayerInfoAndEmit = (socket,data)=>{
   });
 }
 
+var sqlForPlayerEquipment = 'select es.equipment_slot_id,'
++'es.equipment_slot_name,items.item_id,items.item_name,items.item_text,items.item_effect_type,items.item_effect_modified_stat,items.item_effect_impact'
++' from equipment_slots es left outer join items on es.equipment_slot_id=items.equipment_slot_id and items.item_id in (select item_id from player_equipment where player_id=$1);'
+
+const getPlayerEquipmentAndEmit = (socket,data)=>{
+  pool.query(sqlForPlayerEquipment,[data.player_id],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      socket.emit('getPlayerEquipment',res.rows);
+    }
+  });
+}
+
 const getPlayerResourcesAndEmit = (socket,data)=>{
-  pool.query('select * from player_resources where player_id = $1',[data.player_id],(err,res)=>{
+  pool.query('select b.*,a.amount from player_resources a, resources b where a.resource_id = b.resource_id and a.player_id=$1 order by a.amount desc;',[data.player_id],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -29,7 +43,7 @@ const getPlayerResourcesAndEmit = (socket,data)=>{
 }
 
 const getPlayerItemsAndEmit = (socket,data)=>{
-  pool.query('select * from player_items where player_id = $1',[data.player_id],(err,res)=>{
+  pool.query('select b.*,a.amount from player_items a, items b where a.item_id = b.item_id and a.player_id=$1 order by a.amount desc;',[data.player_id],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -77,6 +91,7 @@ const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone)=>{
 module.exports = {
   pool:pool,
   getPlayerInfoAndEmit:getPlayerInfoAndEmit,
+  getPlayerEquipmentAndEmit:getPlayerEquipmentAndEmit,
   getPlayerResourcesAndEmit:getPlayerResourcesAndEmit,
   getPlayerItemsAndEmit:getPlayerItemsAndEmit,
   getZoneInformationAndEmit:getZoneInformationAndEmit,

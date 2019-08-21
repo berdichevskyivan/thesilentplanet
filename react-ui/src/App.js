@@ -6,6 +6,9 @@ import ZoneInfo from './ZoneInfo';
 import Console from './Console';
 import LocalChat from './LocalChat';
 import GlobalChat from './GlobalChat';
+import Equipment from './Equipment';
+import Items from './Items';
+import Resources from './Resources';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import videoPath from './resources/video/forest.mp4';
@@ -15,8 +18,10 @@ class App extends React.Component {
   constructor(){
     super();
     this.state = {
+      playerName:'akitsushima',
       mouseIsOver:false,
       playerInfo:null,
+      playerEquipment:[],
       playerResources:[],
       playerItems:[],
       zoneInfo:null,
@@ -31,7 +36,10 @@ class App extends React.Component {
       showZoneInfo:false,
       showConsole:true,
       showGlobalChat:false,
-      showLocalChat:false
+      showLocalChat:false,
+      showEquipment:true,
+      showItems:false,
+      showResources:false
     }
     this.socket = null;
     this.zoneSocket = null;
@@ -82,6 +90,7 @@ class App extends React.Component {
     if(message===''){
       return false;
     }
+    message = '['+this.state.playerName+'] '+this.state.localChatInputMessage;
     this.socket.emit('localChatMessage',message);
     this.setState({
       localChatInputMessage:''
@@ -94,6 +103,7 @@ class App extends React.Component {
     if(message===''){
       return false;
     }
+    message = '['+this.state.playerName+'] '+this.state.globalChatInputMessage;
     this.socket.emit('globalChatMessage',message);
     this.setState({
       globalChatInputMessage:''
@@ -111,8 +121,8 @@ class App extends React.Component {
       }
     });
 
-    this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket']});
-    this.zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket']});
+    this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+this.state.playerName});
+    this.zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket'],query:'username='+this.state.playerName});
     const socket = this.socket;
     const zoneSocket = this.zoneSocket;
 
@@ -124,12 +134,23 @@ class App extends React.Component {
       });
     });
 
-    socket.on('getPlayerResources',function(data){
-      console.log(data)
+    socket.on('getPlayerEquipment',(data)=>{
+      console.log(data);
+      this.setState({
+        playerEquipment:data
+      });
     });
 
-    socket.on('getPlayerItems',function(data){
-      console.log(data);
+    socket.on('getPlayerResources',(data)=>{
+      this.setState({
+        playerResources:data
+      });
+    });
+
+    socket.on('getPlayerItems',(data)=>{
+      this.setState({
+        playerItems:data
+      });
     });
 
     socket.on('consoleMessage', (msg)=>{
@@ -267,10 +288,10 @@ class App extends React.Component {
           <div className="row Footer fixed-bottom">
             <div className="col-md-4 col-sm-4 column InfoBox hideonmobile">
               <div className="row Tabs">
-                <div className="col-md-6 col-sm-6 tabcolumn" onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
+                <div className="col-md-6 col-sm-6 tabcolumn" style={this.state.showPersonalInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
                   <p>Personal Information</p>
                 </div>
-                <div className="col-md-6 col-sm-6 tabcolumn" onClick={()=>{this.setState({ showPersonalInfo:false, showZoneInfo:true })}}>
+                <div className="col-md-6 col-sm-6 tabcolumn" style={this.state.showZoneInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:false, showZoneInfo:true })}}>
                   <p>Zone Information</p>
                 </div>
               </div>
@@ -303,18 +324,19 @@ class App extends React.Component {
             </div>
             <div className="col-md-4 col-sm-4 column hideonmobile">
               <div className="row Tabs">
-                <div className="col-md-4 col-sm-4 tabcolumn equipmentTab">
+                <div className="col-md-4 col-sm-4 tabcolumn equipmentTab" style={this.state.showEquipment ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:true, showItems:false, showResources:false })}}>
                   <p>Equipment</p>
                 </div>
-                <div className="col-md-4 col-sm-4 tabcolumn">
+                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showItems ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:false, showItems:true, showResources:false })}}>
                   <p>Items</p>
                 </div>
-                <div className="col-md-4 col-sm-4 tabcolumn">
+                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showResources ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:false, showItems:false, showResources:true })}}>
                   <p>Resources</p>
                 </div>
               </div>
-              <div className="row InformationBox">
-              </div>
+              <Equipment show={this.state.showEquipment} playerEquipment={this.state.playerEquipment} />
+              <Items show={this.state.showItems} playerItems={this.state.playerItems} />
+              <Resources show={this.state.showResources} playerResources={this.state.playerResources} />
             </div>
           </div>
         </div>

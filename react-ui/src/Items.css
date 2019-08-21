@@ -1,0 +1,33 @@
+.Items {
+
+}
+
+.Items ul {
+  height: 100%;
+  width: 100%;
+  list-style: none;
+  padding-top: 15px;
+  padding-left: 20px;
+  padding-right: 20px;
+  font-family: monospace;
+  font-weight: bold;
+  font-size: 16px;
+}
+
+.Items ul li {
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 5px;
+}
+
+.Items ul li p {
+  width: 5%;
+  text-align: center;
+}
+
+.Items ul li p#itemName {
+  width: 25%;
+  text-align: center;
+}
