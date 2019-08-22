@@ -77,11 +77,14 @@ const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInFirstZone,mobCount)=>{
   });
 }
 
-const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone)=>{
-  pool.query('select * from zone_resources where zone_id=$1 order by random() limit 1',[zone_id],(err,res)=>{
+const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone,resourceCount)=>{
+  pool.query('select b.resource_id,b.resource_name,b.resource_text,b.img_url from zone_resources a , resources b where a.resource_id = b.resource_id and zone_id=$1 order by random() limit 1',[zone_id],(err,res)=>{
     if(err){
       console.log(err);
     }else{
+      console.log('RESOURCE COUNT IS ->'+resourceCount);
+      var targetName = res.rows[0].resource_name.toLowerCase().replace(/\s/g, "");
+      res.rows[0].target_name = targetName+'@'+(resourceCount+1);
       resourcesInFirstZone.push(res.rows[0]);
       nsp.emit('generateZoneResources',resourcesInFirstZone);
     }

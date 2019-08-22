@@ -1,0 +1,59 @@
+.ResourceCard {
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  width: 300px;
+  padding: 5px;
+  background: #000303ba;
+  margin-left: 10px;
+}
+
+.ResourceCard:last-child {
+  margin-right:10px;
+}
+
+.ResourceImageRow {
+  height: 45%;
+  width: 100%;
+  max-width: 100%;
+  justify-content: center;
+  align-items: center;
+}
+
+.ResourceImageRow img {
+  height: 70%;
+  width: 25%;
+}
+
+.ResourceTitleRow {
+  height: 30%;
+  width: 100%;
+  max-width: 100%;
+  display: flex;
+  flex-flow: column;
+  justify-content: center;
+  align-items: center;
+}
+
+.ResourceTitleRow p {
+  font-weight: bold;
+  color: lime;
+}
+
+.ResourceActionsRow {
+  height: 25%;
+  width: 100%;
+  max-width: 100%;
+  flex-flow: row;
+  padding: 5px;
+  flex-wrap: nowrap !important;
+}
+
+.ResourceActionsRow img {
+  z-index: 999;
+  height: 100%;
+  width: 17% !important;
+  cursor: pointer !important;
+}

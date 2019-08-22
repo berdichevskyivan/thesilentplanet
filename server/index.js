@@ -92,14 +92,14 @@ if (!isDev && cluster.isMaster) {
       console.log('Generating Mob for Zone 1');
       db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone,mobCount);
       mobCount++;
-    },120000);
+    },5000);
   };
 
   const resourceSpawn = (nsp,resourcesInFirstZone)=>{
     setInterval(()=>{
       console.log('Generating Resource for Zone 1');
-      db.getResourceFromZoneAndEmit(1,nsp,resourcesInFirstZone);
-    },120000);
+      db.getResourceFromZoneAndEmit(1,nsp,resourcesInFirstZone,resourceCount);
+    },5000);
   };
 
   mobSpawn(firstZoneNsp,mobsInFirstZone);

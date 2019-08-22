@@ -1,6 +1,7 @@
 import React from 'react';
 import io from 'socket.io-client';
 import EnemyCard from './EnemyCard';
+import ResourceCard from './ResourceCard';
 import PersonalInfo from './PersonalInfo';
 import ZoneInfo from './ZoneInfo';
 import Console from './Console';
@@ -20,6 +21,7 @@ class App extends React.Component {
     this.state = {
       playerName:'akitsushima',
       mouseIsOver:false,
+      mouseIsOverResourceZone:false,
       playerInfo:null,
       playerEquipment:[],
       playerResources:[],
@@ -32,6 +34,7 @@ class App extends React.Component {
       localChatMessages:[],
       globalChatMessages:[],
       npcInZone:[],
+      resourcesInZone:[],
       showPersonalInfo:true,
       showZoneInfo:false,
       showConsole:true,
@@ -112,12 +115,17 @@ class App extends React.Component {
 
   componentDidMount(){
 
-    var item = document.getElementsByClassName('NpcZone')[0];
+    var npcZone = document.getElementsByClassName('NpcZone')[0];
+    var resourceZone = document.getElementsByClassName('ResourceZone')[0];
 
     window.addEventListener('wheel', (e)=>{
       if(this.state.mouseIsOver){
-        if (e.deltaY > 0) item.scrollLeft += 50;
-        else item.scrollLeft -= 50;
+        if (e.deltaY > 0) npcZone.scrollLeft += 50;
+        else npcZone.scrollLeft -= 50;
+      }
+      if(this.state.mouseIsOverResourceZone){
+        if (e.deltaY > 0) resourceZone.scrollLeft += 50;
+        else resourceZone.scrollLeft -= 50;
       }
     });
 
@@ -213,8 +221,10 @@ class App extends React.Component {
       });
     });
 
-    zoneSocket.on('generateZoneResources',function(data){
-      console.log(data);
+    zoneSocket.on('generateZoneResources',(data)=>{
+      this.setState({
+        resourcesInZone:data
+      });
     });
 
   }
@@ -248,6 +258,7 @@ class App extends React.Component {
   render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
+    const rowOrColumnForResource = this.state.resourcesInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
 
     return (
       <div className="App">
@@ -267,7 +278,10 @@ class App extends React.Component {
               </div>
             </div>
             <div className="col-md-8 col-sm-8 worldcolumn">
-              <div className="row ResourceZone">
+              <div className="row ResourceZone" style={rowOrColumnForResource} onMouseOver={ ()=>{this.setState({mouseIsOverResourceZone:true})}} onMouseOut={()=>{this.setState({mouseIsOverResourceZone:false})}}>
+                { this.state.resourcesInZone.map((resource)=>{
+                  return <ResourceCard resource={resource} />
+                }) }
               </div>
               <div className="row NpcZone" style={rowOrColumn} onMouseOver={ ()=>{this.setState({mouseIsOver:true})}} onMouseOut={()=>{this.setState({mouseIsOver:false})}} >
                 { this.state.npcInZone.map((npc)=>{

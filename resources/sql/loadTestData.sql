@@ -45,11 +45,11 @@ INSERT INTO npc_items VALUES
 (2,2,1);
 
 INSERT INTO resources VALUES
-(1,'Platinum Ore','A lump of Platinum Ore. You could extract pure Platinum from it.'),
-(2,'Platinum Ingot','An ingot made out of Platinum. It can be used to manufacture specific hardware needed to craft certain items.'),
-(3,'Platinum Circuit Board','Circuit Board based on Platinum. Provides high-speed data transfer between all components of the system, crucial for certain items.'),
-(4,'Platinum Gears','Gears made out of Platinum, used in the manufacture of certain items.'),
-(5,'Gold Ore','A lump of Gold Ore. You could extract pure Gold from it.');
+(1,'Platinum Ore','A lump of Platinum Ore. You could extract pure Platinum from it.','./resources/images/resources/platinum_ore.png'),
+(2,'Platinum Ingot','An ingot made out of Platinum. It can be used to manufacture specific hardware needed to craft certain items.','./resources/images/resources/platinum_ingot.png'),
+(3,'Platinum Circuit Board','Circuit Board based on Platinum. Provides high-speed data transfer between all components of the system, crucial for certain items.','./resources/images/resources/platinum_ore.png'),
+(4,'Platinum Gears','Gears made out of Platinum, used in the manufacture of certain items.','./resources/images/resources/platinum_ore.png'),
+(5,'Gold Ore','A lump of Gold Ore. You could extract pure Gold from it.','./resources/images/resources/platinum_ore.png');
 
 INSERT INTO items VALUES
 (1,'Enos Mask','A Mask carved out of the head of a Enos Demon.','yes',1,'increase','engineering',10),

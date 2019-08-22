@@ -76,7 +76,8 @@ CREATE TABLE npc_items (
 CREATE TABLE resources (
   resource_id SMALLINT,
   resource_name VARCHAR(50),
-  resource_text TEXT
+  resource_text TEXT,
+  img_url TEXT
 );
 
 CREATE TABLE items (

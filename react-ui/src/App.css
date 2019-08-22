@@ -26,6 +26,7 @@ p {
 
 .worldcolumn {
   padding: 0 !important;
+  height: 100%;
 }
 
 .column, .tabcolumn {
@@ -112,9 +113,11 @@ p {
   height: 30%;
   width: 100%;
   margin: 0 !important;
-  justify-content: center;
+  justify-content: left;
   align-items: center;
   padding: 5px;
+  overflow-x: hidden;
+  overflow-y: hidden;
 }
 
 .InfoBox {
