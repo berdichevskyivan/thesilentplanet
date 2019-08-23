@@ -2,7 +2,8 @@ const { Client, Pool } = require('pg');
 
 const pool = new Pool({
   user:'postgres',
-  password:'rakmodar',
+  password:'dgtic123',
+  //password:'rakmodar',
   host:'localhost',
   database:'thesilentplanet',
   port:5432
@@ -76,7 +77,7 @@ const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInFirstZone,mobCount)=>{
     if(err){
       console.log(err);
     }else{
-      console.log('COUNT IS ->'+mobCount);
+      console.log('COUNT IS ->'+(mobCount+1));
       var targetName = res.rows[0].npc_name.toLowerCase().replace(/\s/g, "");
       res.rows[0].target_name = targetName+'@'+(mobCount+1);
       res.rows[0].current_stability = res.rows[0].stability;
@@ -91,7 +92,7 @@ const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone,resourceCou
     if(err){
       console.log(err);
     }else{
-      console.log('RESOURCE COUNT IS ->'+resourceCount);
+      console.log('RESOURCE COUNT IS ->'+(resourceCount+1));
       var targetName = res.rows[0].resource_name.toLowerCase().replace(/\s/g, "");
       res.rows[0].target_name = targetName+'@'+(resourceCount+1);
       resourcesInFirstZone.push(res.rows[0]);
@@ -100,7 +101,7 @@ const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone,resourceCou
   });
 }
 
-const insertUsernameAndPasswordAndEmit = (socket,username,password)=>{
+const insertUsernameAndPasswordAndEmit = (socket,username,password,loggedInUsers)=>{
   pool.query('INSERT INTO players(player_name,player_password) VALUES ($1,$2);',[username,password],(err,res)=>{
     if(err){
       console.log(err);
@@ -110,8 +111,9 @@ const insertUsernameAndPasswordAndEmit = (socket,username,password)=>{
         socket.emit('submitSignup',{ responseStatus:'ERROR', responseMessage:'There was an error' });
       }
     }else{
-      console.log('User '+username+' was inserted into the database.')
-      socket.emit('submitSignup',{ responseStatus:'OK', responseMessage:'Sign up was successful', username:username});
+      console.log('User '+username+' was inserted into the database.');
+      loggedInUsers[username] = genID();
+      socket.emit('submitSignup',{ responseStatus:'OK', responseMessage:'Sign up was successful', username:username, userUniqueID:loggedInUsers[username] });
     }
   });
 }

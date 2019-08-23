@@ -28,7 +28,7 @@ class Login extends React.Component {
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username!=null && userUniqueID!=null){
-      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='valid'){
           this.props.history.push('/');
@@ -38,7 +38,7 @@ class Login extends React.Component {
         }
       });
     }else{
-      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket']});
+      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket']});
     }
   }
 
@@ -65,6 +65,13 @@ class Login extends React.Component {
       this.setState({
         signupResponse:data.responseMessage
       });
+      if(data.responseStatus==='OK'){
+        UserProfile.setName(data.username);
+        UserProfile.setUniqueID(data.userUniqueID);
+        localStorage.setItem('username',data.username);
+        localStorage.setItem('userUniqueID',data.userUniqueID);
+        this.props.history.push('/');
+      }
     });
 
   }
@@ -162,6 +169,9 @@ class Login extends React.Component {
               <button onClick={this.submitSignup} >Sign up</button>
               <div className="ResponseBox" style={this.state.signupResponse != '' && this.state.signupSent ? {'display':'flex'} : {'display':'none'} }>
                 {this.state.signupResponse}
+              </div>
+              <div className="SpinnerBox" style={this.state.signupResponse === '' && this.state.signupSent ? {'display':'flex'} : {'display':'none'} }>
+                <img src={spinnerPath} />
               </div>
             </div>
           </div>

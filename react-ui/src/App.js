@@ -14,6 +14,7 @@ import UserProfile from './UserProfile';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import videoPath from './resources/video/forest.mp4';
+import connectedPath from './resources/images/ui/connected.png';
 
 class App extends React.Component {
 
@@ -27,6 +28,7 @@ class App extends React.Component {
       playerEquipment:[],
       playerResources:[],
       playerItems:[],
+      usersInZone:[],
       zoneInfo:null,
       consoleInputMessage:'',
       localChatInputMessage:'',
@@ -79,9 +81,8 @@ class App extends React.Component {
   submitConsoleMessage(event){
     event.preventDefault();
     var message = this.state.consoleInputMessage;
-    if(message===''){
-      return false;
-    }
+    if (message==='') return false;
+    if (message==='logout') this.handleLogout();
     this.socket.emit('consoleMessage',message);
     this.setState({
       consoleInputMessage:''
@@ -95,7 +96,7 @@ class App extends React.Component {
       return false;
     }
     message = '['+this.state.playerName+'] '+this.state.localChatInputMessage;
-    this.socket.emit('localChatMessage',message);
+    this.zoneSocket.emit('localChatMessage',message);
     this.setState({
       localChatInputMessage:''
     });
@@ -129,12 +130,14 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
-      this.zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.zoneSocket = io('ws://192.168.11.152:5000/first-zone-namespace', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
           this.props.history.push('/login');
+          this.socket.disconnect();
+          this.zoneSocket.disconnect();
         }else{
           const socket = this.socket;
           const zoneSocket = this.zoneSocket;
@@ -175,6 +178,19 @@ class App extends React.Component {
             },()=>{
               var chatDiv = document.getElementById('consoleMessages');
               chatDiv.scrollTop = chatDiv.scrollHeight;
+            });
+          });
+
+          socket.on('logout',()=>{
+            localStorage.clear();
+            this.props.history.push('/login');
+            socket.disconnect();
+            zoneSocket.disconnect();
+          });
+
+          zoneSocket.on('usersInZone',(data)=>{
+            this.setState({
+              usersInZone:data
             });
           });
 
@@ -269,6 +285,10 @@ class App extends React.Component {
     }
   }
 
+  handleLogout = ()=>{
+    this.socket.emit('logout',{});
+  }
+
   attackNpc = (targetName)=>{
     this.zoneSocket.emit('attackNpc',{
       attackingUser:this.state.playerInfo.player_name,
@@ -297,6 +317,11 @@ class App extends React.Component {
                 </div>
               </div>
               <div className="row CurrentPlayers">
+                <ul>
+                  { this.state.usersInZone.map((user)=>{
+                    return <li><img src={connectedPath} />{user}</li>
+                  }) }
+                </ul>
               </div>
             </div>
             <div className="col-md-8 col-sm-8 worldcolumn">

@@ -3,8 +3,8 @@ const path = require('path');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
 const socketio = require('socket.io');
-//const { Client, Pool } = require('pg');
 const db = require('./dbcontroller.js');
+const zoneController = require('./zoneController.js');
 
 const isDev = process.env.NODE_ENV !== 'production';
 const PORT = process.env.PORT || 5000;
@@ -68,17 +68,18 @@ if (!isDev && cluster.isMaster) {
           socket.emit('consoleMessage',msg);
         });
 
-        //LOCAL
-        socket.on('localChatMessage', function(msg){
-          console.log('Local Chat Message sent: '+msg);
-          firstZoneNsp.emit('localChatMessage',msg);
-        });
-
         //GLOBAL
         socket.on('globalChatMessage', function(msg){
           console.log('Global Chat Message sent: '+msg);
           io.emit('globalChatMessage',msg);
         });
+
+        socket.on('logout',function(){
+          console.log('User '+socket.username+' logged out.');
+          delete loggedInUsers[socket.username];
+          socket.emit('logout',{});
+        });
+
       }else{
         console.log('Someone has connected.');
         socket.emit('sessionStatus',{sessionStatus:'invalid'});
@@ -91,7 +92,7 @@ if (!isDev && cluster.isMaster) {
         socket.on('submitSignup', function(data){
           let username = data.username;
           let password = data.password;
-          db.insertUsernameAndPasswordAndEmit(socket,username,password);
+          db.insertUsernameAndPasswordAndEmit(socket,username,password,loggedInUsers);
         });
       }
     }else{
@@ -106,7 +107,7 @@ if (!isDev && cluster.isMaster) {
       socket.on('submitSignup', function(data){
         let username = data.username;
         let password = data.password;
-        db.insertUsernameAndPasswordAndEmit(socket,username,password);
+        db.insertUsernameAndPasswordAndEmit(socket,username,password,loggedInUsers);
       });
     }
 
@@ -118,50 +119,10 @@ if (!isDev && cluster.isMaster) {
 
   const mobsInFirstZone = [];
   const resourcesInFirstZone = [];
-
   let mobCount = 0;
   let resourceCount = 0;
-
-  const mobSpawn = (nsp,mobsInFirstZone)=>{
-    setInterval(()=>{
-      console.log('Generating Mob for Zone 1');
-      db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone,mobCount);
-      mobCount++;
-    },120000);
-  };
-
-  const resourceSpawn = (nsp,resourcesInFirstZone)=>{
-    setInterval(()=>{
-      console.log('Generating Resource for Zone 1');
-      db.getResourceFromZoneAndEmit(1,nsp,resourcesInFirstZone,resourceCount);
-    },110000);
-  };
-
-  mobSpawn(firstZoneNsp,mobsInFirstZone);
-  resourceSpawn(firstZoneNsp,resourcesInFirstZone);
-
-  firstZoneNsp.on('connection',function(socket){
-    socket.username = socket.handshake.query.username;
-    console.log('User '+socket.username+' has joined the First Zone.');
-    db.getZoneInformationAndEmit(socket,1);
-    socket.on('attackNpc',function(data){
-      var attackedNpcIndex=null;
-      var attackedNpc = mobsInFirstZone.find(function(npc,index){
-        if(npc.target_name === data.attackedTarget){
-          attackedNpcIndex=index;
-          return true;
-        }
-      });
-      mobsInFirstZone[attackedNpcIndex].current_stability = mobsInFirstZone[attackedNpcIndex].current_stability - data.spDamage;
-      socket.emit('consoleMessage','You attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
-      firstZoneNsp.emit('localChatMessage',data.attackingUser+' has attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
-      if(mobsInFirstZone[attackedNpcIndex].current_stability<=0){
-        mobsInFirstZone.splice(attackedNpcIndex,1);
-        socket.emit('consoleMessage', data.attackedTarget+' dies.');
-        firstZoneNsp.emit('localChatMessage',data.attackingUser+' deals a killing blow! '+data.attackedTarget+' dies.');
-      }
-      firstZoneNsp.emit('generateZoneNpc',mobsInFirstZone);
-    });
-  });
+  zoneController.onConnectionToZoneNsp(firstZoneNsp,db,mobsInFirstZone);
+  zoneController.mobSpawn(db,firstZoneNsp,mobsInFirstZone,mobCount,1);
+  zoneController.resourceSpawn(db,firstZoneNsp,resourcesInFirstZone,resourceCount,1);
 
 }
