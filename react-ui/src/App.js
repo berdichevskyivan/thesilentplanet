@@ -10,6 +10,7 @@ import GlobalChat from './GlobalChat';
 import Equipment from './Equipment';
 import Items from './Items';
 import Resources from './Resources';
+import UserProfile from './UserProfile';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import videoPath from './resources/video/forest.mp4';
@@ -19,7 +20,7 @@ class App extends React.Component {
   constructor(){
     super();
     this.state = {
-      playerName:'akitsushima',
+      playerName:null,
       mouseIsOver:false,
       mouseIsOverResourceZone:false,
       playerInfo:null,
@@ -113,119 +114,140 @@ class App extends React.Component {
     });
   }
 
+  componentWillMount(){
+    console.log('executing');
+
+  }
+
   componentDidMount(){
 
-    var npcZone = document.getElementsByClassName('NpcZone')[0];
-    var resourceZone = document.getElementsByClassName('ResourceZone')[0];
-
-    window.addEventListener('wheel', (e)=>{
-      if(this.state.mouseIsOver){
-        if (e.deltaY > 0) npcZone.scrollLeft += 50;
-        else npcZone.scrollLeft -= 50;
-      }
-      if(this.state.mouseIsOverResourceZone){
-        if (e.deltaY > 0) resourceZone.scrollLeft += 50;
-        else resourceZone.scrollLeft -= 50;
-      }
-    });
-
-    this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+this.state.playerName});
-    this.zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket'],query:'username='+this.state.playerName});
-    const socket = this.socket;
-    const zoneSocket = this.zoneSocket;
-
-    socket.emit('getPlayerInformation',{player_id:1});
-
-    socket.on('getPlayerInformation',(data)=>{
+    var username = localStorage.getItem('username');
+    var userUniqueID = localStorage.getItem('userUniqueID');
+    if(username===null || userUniqueID===null){
+      this.props.history.push('/login');
+    }else{
       this.setState({
-        playerInfo:data
+        playerName:username
       });
-    });
+      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.zoneSocket = io('ws://192.168.0.14:5000/first-zone-namespace', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket.on('sessionStatus',(data)=>{
+        if(data.sessionStatus==='invalid'){
+          localStorage.clear();
+          this.props.history.push('/login');
+        }else{
+          const socket = this.socket;
+          const zoneSocket = this.zoneSocket;
 
-    socket.on('getPlayerEquipment',(data)=>{
-      console.log(data);
-      this.setState({
-        playerEquipment:data
+          socket.emit('getPlayerInformation');
+
+          socket.on('getPlayerInformation',(data)=>{
+            this.setState({
+              playerInfo:data
+            });
+          });
+
+          socket.on('getPlayerEquipment',(data)=>{
+            console.log(data);
+            this.setState({
+              playerEquipment:data
+            });
+          });
+
+          socket.on('getPlayerResources',(data)=>{
+            this.setState({
+              playerResources:data
+            });
+          });
+
+          socket.on('getPlayerItems',(data)=>{
+            this.setState({
+              playerItems:data
+            });
+          });
+
+          socket.on('consoleMessage', (msg)=>{
+            let newConsoleMessages = this.state.consoleMessages;
+            newConsoleMessages.push({message:msg});
+
+            this.setState({
+              consoleMessages:newConsoleMessages
+            },()=>{
+              var chatDiv = document.getElementById('consoleMessages');
+              chatDiv.scrollTop = chatDiv.scrollHeight;
+            });
+          });
+
+          zoneSocket.on('consoleMessage', (msg)=>{
+            let newConsoleMessages = this.state.consoleMessages;
+            newConsoleMessages.push({message:msg});
+
+            this.setState({
+              consoleMessages:newConsoleMessages
+            },()=>{
+              var chatDiv = document.getElementById('consoleMessages');
+              chatDiv.scrollTop = chatDiv.scrollHeight;
+            });
+          });
+
+          zoneSocket.on('localChatMessage', (msg)=>{
+            let newLocalChatMessages = this.state.localChatMessages;
+            newLocalChatMessages.push({message:msg});
+
+            this.setState({
+              localChatMessages:newLocalChatMessages
+            },()=>{
+              var chatDiv = document.getElementById('localChatMessages');
+              chatDiv.scrollTop = chatDiv.scrollHeight;
+            });
+          });
+
+          socket.on('globalChatMessage', (msg)=>{
+            let newGlobalChatMessages = this.state.globalChatMessages;
+            newGlobalChatMessages.push({message:msg});
+
+            this.setState({
+              globalChatMessages:newGlobalChatMessages
+            },()=>{
+              var chatDiv = document.getElementById('globalChatMessages');
+              chatDiv.scrollTop = chatDiv.scrollHeight;
+            });
+          });
+
+          zoneSocket.on('getZoneInformation',(data)=>{
+            this.setState({
+              zoneInfo:data
+            });
+          });
+
+          zoneSocket.on('generateZoneNpc',(data)=>{
+            this.setState({
+              npcInZone:data
+            });
+          });
+
+          zoneSocket.on('generateZoneResources',(data)=>{
+            this.setState({
+              resourcesInZone:data
+            });
+          });
+
+          var npcZone = document.getElementsByClassName('NpcZone')[0];
+          var resourceZone = document.getElementsByClassName('ResourceZone')[0];
+
+          window.addEventListener('wheel', (e)=>{
+            if(this.state.mouseIsOver){
+              if (e.deltaY > 0) npcZone.scrollLeft += 50;
+              else npcZone.scrollLeft -= 50;
+            }
+            if(this.state.mouseIsOverResourceZone){
+              if (e.deltaY > 0) resourceZone.scrollLeft += 50;
+              else resourceZone.scrollLeft -= 50;
+            }
+          });
+        }
       });
-    });
-
-    socket.on('getPlayerResources',(data)=>{
-      this.setState({
-        playerResources:data
-      });
-    });
-
-    socket.on('getPlayerItems',(data)=>{
-      this.setState({
-        playerItems:data
-      });
-    });
-
-    socket.on('consoleMessage', (msg)=>{
-      let newConsoleMessages = this.state.consoleMessages;
-      newConsoleMessages.push({message:msg});
-
-      this.setState({
-        consoleMessages:newConsoleMessages
-      },()=>{
-        var chatDiv = document.getElementById('consoleMessages');
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-      });
-    });
-
-    zoneSocket.on('consoleMessage', (msg)=>{
-      let newConsoleMessages = this.state.consoleMessages;
-      newConsoleMessages.push({message:msg});
-
-      this.setState({
-        consoleMessages:newConsoleMessages
-      },()=>{
-        var chatDiv = document.getElementById('consoleMessages');
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-      });
-    });
-
-    zoneSocket.on('localChatMessage', (msg)=>{
-      let newLocalChatMessages = this.state.localChatMessages;
-      newLocalChatMessages.push({message:msg});
-
-      this.setState({
-        localChatMessages:newLocalChatMessages
-      },()=>{
-        var chatDiv = document.getElementById('localChatMessages');
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-      });
-    });
-
-    socket.on('globalChatMessage', (msg)=>{
-      let newGlobalChatMessages = this.state.globalChatMessages;
-      newGlobalChatMessages.push({message:msg});
-
-      this.setState({
-        globalChatMessages:newGlobalChatMessages
-      },()=>{
-        var chatDiv = document.getElementById('globalChatMessages');
-        chatDiv.scrollTop = chatDiv.scrollHeight;
-      });
-    });
-
-    zoneSocket.on('getZoneInformation',(data)=>{
-      this.setState({
-        zoneInfo:data
-      });
-    });
-
-    zoneSocket.on('generateZoneNpc',(data)=>{
-      this.setState({
-        npcInZone:data
-      });
-    });
-
-    zoneSocket.on('generateZoneResources',(data)=>{
-      this.setState({
-        resourcesInZone:data
-      });
-    });
+    }
 
   }
 

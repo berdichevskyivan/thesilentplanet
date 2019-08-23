@@ -46,37 +46,72 @@ if (!isDev && cluster.isMaster) {
   const io = socketio(server);
   const firstZoneNsp = io.of('/first-zone-namespace');
 
+  var loggedInUsers = {};
+
   io.on('connection',function(socket){
     socket.username = socket.handshake.query.username;
-    console.log('User '+socket.username+' has connected.');
+    socket.userUniqueID = socket.handshake.query.userUniqueID;
+    if(typeof socket.username != 'undefined' && typeof socket.userUniqueID != 'undefined'){
+      if(loggedInUsers[socket.username]===socket.userUniqueID){
+        socket.emit('sessionStatus',{sessionStatus:'valid'});
+        console.log('User '+socket.username+' has connected.');
+        //GET PLAYER INFORMATION
+        socket.on('getPlayerInformation',function(){
+          db.getPlayerInfoAndEmit(socket);
+          db.getPlayerEquipmentAndEmit(socket);
+          db.getPlayerResourcesAndEmit(socket);
+          db.getPlayerItemsAndEmit(socket);
+        });
+        //SENDER
+        socket.on('consoleMessage', function(msg){
+          console.log('Console Message sent: '+msg);
+          socket.emit('consoleMessage',msg);
+        });
+
+        //LOCAL
+        socket.on('localChatMessage', function(msg){
+          console.log('Local Chat Message sent: '+msg);
+          firstZoneNsp.emit('localChatMessage',msg);
+        });
+
+        //GLOBAL
+        socket.on('globalChatMessage', function(msg){
+          console.log('Global Chat Message sent: '+msg);
+          io.emit('globalChatMessage',msg);
+        });
+      }else{
+        console.log('Someone has connected.');
+        socket.emit('sessionStatus',{sessionStatus:'invalid'});
+        socket.on('submitLogin', function(data){
+          let username = data.username;
+          let password = data.password;
+          db.verifyUsernameAndPasswordAndEmit(socket,username,password,loggedInUsers);
+        });
+
+        socket.on('submitSignup', function(data){
+          let username = data.username;
+          let password = data.password;
+          db.insertUsernameAndPasswordAndEmit(socket,username,password);
+        });
+      }
+    }else{
+      console.log('Someone has connected.');
+      socket.emit('sessionStatus',{sessionStatus:'invalid'});
+      socket.on('submitLogin', function(data){
+        let username = data.username;
+        let password = data.password;
+        db.verifyUsernameAndPasswordAndEmit(socket,username,password,loggedInUsers);
+      });
+
+      socket.on('submitSignup', function(data){
+        let username = data.username;
+        let password = data.password;
+        db.insertUsernameAndPasswordAndEmit(socket,username,password);
+      });
+    }
 
     socket.on('disconnect', function(){
       console.log('User disconnected');
-    });
-
-    socket.on('getPlayerInformation',function(data){
-      db.getPlayerInfoAndEmit(socket,data);
-      db.getPlayerEquipmentAndEmit(socket,data);
-      db.getPlayerResourcesAndEmit(socket,data);
-      db.getPlayerItemsAndEmit(socket,data);
-    });
-
-    //SENDER
-    socket.on('consoleMessage', function(msg){
-      console.log('Console Message sent: '+msg);
-      socket.emit('consoleMessage',msg);
-    });
-
-    //LOCAL
-    socket.on('localChatMessage', function(msg){
-      console.log('Local Chat Message sent: '+msg);
-      firstZoneNsp.emit('localChatMessage',msg);
-    });
-
-    //GLOBAL
-    socket.on('globalChatMessage', function(msg){
-      console.log('Global Chat Message sent: '+msg);
-      io.emit('globalChatMessage',msg);
     });
 
   });
@@ -92,14 +127,14 @@ if (!isDev && cluster.isMaster) {
       console.log('Generating Mob for Zone 1');
       db.getNpcFromZoneAndEmit(1,nsp,mobsInFirstZone,mobCount);
       mobCount++;
-    },5000);
+    },120000);
   };
 
   const resourceSpawn = (nsp,resourcesInFirstZone)=>{
     setInterval(()=>{
       console.log('Generating Resource for Zone 1');
       db.getResourceFromZoneAndEmit(1,nsp,resourcesInFirstZone,resourceCount);
-    },5000);
+    },110000);
   };
 
   mobSpawn(firstZoneNsp,mobsInFirstZone);

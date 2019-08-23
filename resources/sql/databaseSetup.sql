@@ -2,16 +2,17 @@ CREATE TABLE players (
   player_id SERIAL,
   player_name VARCHAR(40),
   player_password VARCHAR(40),
-  currency SMALLINT,
-  stability SMALLINT,
-  average_temperature SMALLINT,
-  alignment_id SMALLINT,
-  engineering SMALLINT,
-  theft SMALLINT,
-  intrusion SMALLINT,
-  optics SMALLINT,
-  sensors SMALLINT,
-  current_zone_id SMALLINT
+  currency SMALLINT DEFAULT 0,
+  stability SMALLINT DEFAULT 100,
+  average_temperature SMALLINT DEFAULT 20,
+  alignment_id SMALLINT DEFAULT 1,
+  engineering SMALLINT DEFAULT 0,
+  theft SMALLINT DEFAULT 0,
+  intrusion SMALLINT DEFAULT 0,
+  optics SMALLINT DEFAULT 0,
+  sensors SMALLINT DEFAULT 0,
+  current_zone_id SMALLINT DEFAULT 1,
+  PRIMARY KEY (player_name)
 );
 
 CREATE TABLE player_resources (

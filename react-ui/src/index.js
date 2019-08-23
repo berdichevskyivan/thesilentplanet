@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Route, BrowserRouter as Router, Switch } from 'react-router-dom';
 import App from './App';
+import Login from './Login';
 import NotFound from './NotFound';
 import * as serviceWorker from './serviceWorker';
 
@@ -9,6 +10,7 @@ const routing = (
   <Router>
     <Switch>
       <Route exact path="/" component={ App } />
+      <Route path="/login" component={ Login } />
       <Route component={ NotFound } />
     </Switch>
   </Router>

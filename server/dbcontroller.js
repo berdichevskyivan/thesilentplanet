@@ -8,8 +8,15 @@ const pool = new Pool({
   port:5432
 });
 
-const getPlayerInfoAndEmit = (socket,data)=>{
-  pool.query('select * from players where player_id = $1',[data.player_id],(err,res)=>{
+var genID = function guidGenerator() {
+    var S4 = function() {
+       return (((1+Math.random())*0x10000)|0).toString(16).substring(1);
+    };
+    return (S4()+S4()+"-"+S4()+"-"+S4()+"-"+S4()+"-"+S4()+S4()+S4());
+}
+
+const getPlayerInfoAndEmit = (socket)=>{
+  pool.query('select * from players where player_name = $1',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -20,10 +27,11 @@ const getPlayerInfoAndEmit = (socket,data)=>{
 
 var sqlForPlayerEquipment = 'select es.equipment_slot_id,'
 +'es.equipment_slot_name,items.item_id,items.item_name,items.item_text,items.item_effect_type,items.item_effect_modified_stat,items.item_effect_impact'
-+' from equipment_slots es left outer join items on es.equipment_slot_id=items.equipment_slot_id and items.item_id in (select item_id from player_equipment where player_id=$1);'
++' from equipment_slots es left outer join items on es.equipment_slot_id=items.equipment_slot_id and items.item_id in'
++' (select item_id from player_equipment pe, players pl where pe.player_id=pl.player_id and pl.player_name=$1);'
 
-const getPlayerEquipmentAndEmit = (socket,data)=>{
-  pool.query(sqlForPlayerEquipment,[data.player_id],(err,res)=>{
+const getPlayerEquipmentAndEmit = (socket)=>{
+  pool.query(sqlForPlayerEquipment,[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -32,8 +40,9 @@ const getPlayerEquipmentAndEmit = (socket,data)=>{
   });
 }
 
-const getPlayerResourcesAndEmit = (socket,data)=>{
-  pool.query('select b.*,a.amount from player_resources a, resources b where a.resource_id = b.resource_id and a.player_id=$1 order by a.amount desc;',[data.player_id],(err,res)=>{
+const getPlayerResourcesAndEmit = (socket)=>{
+  pool.query('select b.*,a.amount from player_resources a, resources b,players c'
+            +' where a.resource_id = b.resource_id and a.player_id = c.player_id and c.player_name=$1 order by a.amount desc;',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -42,8 +51,8 @@ const getPlayerResourcesAndEmit = (socket,data)=>{
   });
 }
 
-const getPlayerItemsAndEmit = (socket,data)=>{
-  pool.query('select b.*,a.amount from player_items a, items b where a.item_id = b.item_id and a.player_id=$1 order by a.amount desc;',[data.player_id],(err,res)=>{
+const getPlayerItemsAndEmit = (socket)=>{
+  pool.query('select b.*,a.amount from player_items a, items b,players c where a.item_id = b.item_id and a.player_id = c.player_id and c.player_name=$1 order by a.amount desc;',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -91,6 +100,39 @@ const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone,resourceCou
   });
 }
 
+const insertUsernameAndPasswordAndEmit = (socket,username,password)=>{
+  pool.query('INSERT INTO players(player_name,player_password) VALUES ($1,$2);',[username,password],(err,res)=>{
+    if(err){
+      console.log(err);
+      if(err.code === '23505'){
+        socket.emit('submitSignup',{ responseStatus:'ERROR', responseMessage:'Username already taken' });
+      }else{
+        socket.emit('submitSignup',{ responseStatus:'ERROR', responseMessage:'There was an error' });
+      }
+    }else{
+      console.log('User '+username+' was inserted into the database.')
+      socket.emit('submitSignup',{ responseStatus:'OK', responseMessage:'Sign up was successful', username:username});
+    }
+  });
+}
+
+const verifyUsernameAndPasswordAndEmit = (socket,username,password,loggedInUsers)=>{
+  pool.query('select from players where player_name=$1 and player_password = $2;',[username,password],(err,res)=>{
+    if(err){
+      console.log(err);
+      socket.emit('submitLogin',{ responseStatus:'ERROR', responseMessage:'There was an error' });
+    }else{
+      console.log('User '+username+' logged in.')
+      if(res.rows.length < 1){
+        socket.emit('submitLogin',{ responseStatus:'ERROR', responseMessage:'Invalid Credentials' });
+      }else{
+        loggedInUsers[username] = genID();
+        socket.emit('submitLogin',{ responseStatus:'OK', responseMessage:'Login Successful',username:username, userUniqueID:loggedInUsers[username] });
+      }
+    }
+  });
+}
+
 module.exports = {
   pool:pool,
   getPlayerInfoAndEmit:getPlayerInfoAndEmit,
@@ -99,5 +141,7 @@ module.exports = {
   getPlayerItemsAndEmit:getPlayerItemsAndEmit,
   getZoneInformationAndEmit:getZoneInformationAndEmit,
   getNpcFromZoneAndEmit:getNpcFromZoneAndEmit,
-  getResourceFromZoneAndEmit:getResourceFromZoneAndEmit
+  getResourceFromZoneAndEmit:getResourceFromZoneAndEmit,
+  insertUsernameAndPasswordAndEmit:insertUsernameAndPasswordAndEmit,
+  verifyUsernameAndPasswordAndEmit:verifyUsernameAndPasswordAndEmit
 }

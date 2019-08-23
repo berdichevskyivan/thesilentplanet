@@ -1,5 +1,5 @@
-INSERT INTO players VALUES
-(1,'akitsushima','12345',0,100,20,1,0,0,0,0,0,1);
+INSERT INTO players(player_name,player_password) VALUES
+('akitsushima','12345');
 
 INSERT INTO player_resources VALUES
 (1,1,10),
