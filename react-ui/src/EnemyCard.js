@@ -1,5 +1,4 @@
 import React from 'react';
-import { Card, CardDeck, ListGroup, ListGroupItem } from 'react-bootstrap';
 import './EnemyCard.css';
 import crosshairPath from './resources/images/ui/crosshair.png';
 import repairPath from './resources/images/ui/repair.png';

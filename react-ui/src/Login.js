@@ -2,7 +2,6 @@ import React from 'react';
 import io from 'socket.io-client';
 import UserProfile from './UserProfile';
 import './Login.css';
-import videoPath from './resources/video/tropical.mp4';
 import spinnerPath from './resources/images/ui/spinner.gif'
 
 class Login extends React.Component {
@@ -27,8 +26,8 @@ class Login extends React.Component {
   componentWillMount(){
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
-    if(username!=null && userUniqueID!=null){
-      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+    if(username!==null && userUniqueID!==null){
+      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='valid'){
           this.props.history.push('/');
@@ -38,7 +37,7 @@ class Login extends React.Component {
         }
       });
     }else{
-      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket']});
+      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket']});
     }
   }
 
@@ -73,6 +72,8 @@ class Login extends React.Component {
         this.props.history.push('/');
       }
     });
+
+    document.getElementsByTagName('input')[0].focus();
 
   }
 
@@ -126,6 +127,18 @@ class Login extends React.Component {
     });
   }
 
+  handleLoginKeyPress = (event) => {
+    if(event.key === 'Enter'){
+      this.submitLogin();
+    }
+  }
+
+  handleSignupKeyPress = (event) => {
+    if(event.key === 'Enter'){
+      this.submitSignup();
+    }
+  }
+
   render(){
 
     const selectedStyle = {
@@ -136,7 +149,7 @@ class Login extends React.Component {
     return (
       <div className="Login">
         <video autoPlay muted loop id="myVideo">
-          <source src={videoPath} type="video/mp4" />
+          <source src="./resources/video/tropical.mp4" type="video/mp4" />
         </video>
         <div className="LoginBox">
           <div className="row LoginTabsRow">
@@ -152,9 +165,9 @@ class Login extends React.Component {
               <p>Username</p>
               <input value={this.state.loginUsername} onChange={this.handleLoginUsername} maxLength={25}/>
               <p>Password</p>
-              <input type="password" value={this.state.loginPassword} onChange={this.handleLoginPassword} maxLength={25}/>
+              <input type="password" value={this.state.loginPassword} onChange={this.handleLoginPassword} maxLength={25} onKeyPress={this.handleLoginKeyPress}/>
               <button onClick={this.submitLogin} >Login</button>
-              <div className="ResponseBox" style={this.state.loginResponse != '' && this.state.loginSent ? {'display':'flex'} : {'display':'none'} }>
+              <div className="ResponseBox" style={this.state.loginResponse !== '' && this.state.loginSent ? {'display':'flex'} : {'display':'none'} }>
                 {this.state.loginResponse}
               </div>
               <div className="SpinnerBox" style={this.state.loginResponse === '' && this.state.loginSent ? {'display':'flex'} : {'display':'none'} }>
@@ -165,9 +178,9 @@ class Login extends React.Component {
               <p>Username</p>
               <input value={this.state.signupUsername} onChange={this.handleSignupUsername} maxLength={25}/>
               <p>Password</p>
-              <input type="password" value={this.state.signupPassword} onChange={this.handleSignupPassword} maxLength={25}/>
+              <input type="password" value={this.state.signupPassword} onChange={this.handleSignupPassword} maxLength={25} onKeyPress={this.handleSignupKeyPress}/>
               <button onClick={this.submitSignup} >Sign up</button>
-              <div className="ResponseBox" style={this.state.signupResponse != '' && this.state.signupSent ? {'display':'flex'} : {'display':'none'} }>
+              <div className="ResponseBox" style={this.state.signupResponse !== '' && this.state.signupSent ? {'display':'flex'} : {'display':'none'} }>
                 {this.state.signupResponse}
               </div>
               <div className="SpinnerBox" style={this.state.signupResponse === '' && this.state.signupSent ? {'display':'flex'} : {'display':'none'} }>

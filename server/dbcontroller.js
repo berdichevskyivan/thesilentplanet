@@ -2,8 +2,8 @@ const { Client, Pool } = require('pg');
 
 const pool = new Pool({
   user:'postgres',
-  password:'dgtic123',
-  //password:'rakmodar',
+  //password:'dgtic123',
+  password:'rakmodar',
   host:'localhost',
   database:'thesilentplanet',
   port:5432
@@ -17,7 +17,7 @@ var genID = function guidGenerator() {
 }
 
 const getPlayerInfoAndEmit = (socket)=>{
-  pool.query('select * from players where player_name = $1',[socket.username],(err,res)=>{
+  pool.query('select a.*,b.zone_id,b.zone_namespace,b.zone_video_url from players a, zones b where a.current_zone_id=b.zone_id and player_name = $1',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -68,6 +68,16 @@ const getZoneInformationAndEmit = (socket,zone_id)=>{
       console.log(err);
     }else{
       socket.emit('getZoneInformation',res.rows[0]);
+    }
+  });
+}
+
+const getOtherZonesAndEmit = (socket,zone_id)=>{
+  pool.query('select * from zones where zone_id!=$1',[zone_id],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      socket.emit('getOtherZones',res.rows);
     }
   });
 }
@@ -135,6 +145,16 @@ const verifyUsernameAndPasswordAndEmit = (socket,username,password,loggedInUsers
   });
 }
 
+const changeZoneAndEmit = (socket,player_id,zone_id)=>{
+  pool.query('update players set current_zone_id=$1 where player_id=$2;',[zone_id,player_id],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      socket.emit('changeZone',{});
+    }
+  });
+}
+
 module.exports = {
   pool:pool,
   getPlayerInfoAndEmit:getPlayerInfoAndEmit,
@@ -142,6 +162,8 @@ module.exports = {
   getPlayerResourcesAndEmit:getPlayerResourcesAndEmit,
   getPlayerItemsAndEmit:getPlayerItemsAndEmit,
   getZoneInformationAndEmit:getZoneInformationAndEmit,
+  getOtherZonesAndEmit:getOtherZonesAndEmit,
+  changeZoneAndEmit:changeZoneAndEmit,
   getNpcFromZoneAndEmit:getNpcFromZoneAndEmit,
   getResourceFromZoneAndEmit:getResourceFromZoneAndEmit,
   insertUsernameAndPasswordAndEmit:insertUsernameAndPasswordAndEmit,

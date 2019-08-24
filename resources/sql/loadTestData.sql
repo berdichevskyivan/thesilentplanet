@@ -13,8 +13,8 @@ INSERT INTO player_equipment VALUES
 (1,1);
 
 INSERT INTO zones VALUES
-(1,'The Overseer','Milky Way Galaxy',20,'Mothership of the Automata. It''s orbiting what''s left of Planet Earth.','Ship',0),
-(2,'Great Amazonian Desert','Planet Earth',60,'What once was the habitat of thousands of species and teaming with life, is now reduced to giant dunes of sand. The lack of atmosphere raises the EM Disturbance to moderate levels.', 'Desert',20);
+(1,'The Overseer','Milky Way Galaxy',20,'Mothership of the Automata. It''s orbiting what''s left of Planet Earth.','Ship',0,'/theoverseer','./resources/video/forest.mp4'),
+(2,'Great Amazonian Desert','Planet Earth',60,'What once was the habitat of thousands of species and teaming with life, is now reduced to giant dunes of sand. The lack of atmosphere raises the EM Disturbance to moderate levels.', 'Desert',20,'/greatamazoniandesert','./resources/video/tropical.mp4');
 
 INSERT INTO zone_resources VALUES
 (1,1),

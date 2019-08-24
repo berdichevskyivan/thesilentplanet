@@ -89,7 +89,7 @@ p {
   margin: 0 !important;
 }
 
-.CurrentPlayers ul {
+.CurrentPlayers ul, .OtherZones ul {
   height: 100%;
   width: 100%;
   display: flex;
@@ -102,7 +102,7 @@ p {
   overflow: hidden;
 }
 
-.CurrentPlayers ul li {
+.CurrentPlayers ul li, .OtherZones ul li {
   width: 100%;
   text-align: center;
   font-size: 16px;
@@ -115,11 +115,19 @@ p {
   cursor:pointer;
 }
 
+.OtherZones ul {
+  padding-left: 0 !important;
+}
+
+.OtherZones ul li {
+  justify-content: center !important;
+}
+
 .CurrentPlayers ul li:hover {
   text-decoration: underline;
 }
 
-.CurrentPlayers ul li img {
+.CurrentPlayers ul li img, .OtherZones ul li img {
   height: 16px;
   max-height: 16px;
   margin-right: 10px;
@@ -184,8 +192,23 @@ button { float:right; background: #000000a8; color: lime; border: none; padding:
     height: 0;
 }
 
-
 .equipmentTab { border-left:none !important; }
+
+.Travelling {
+  height: 100%;
+  width: 100%;
+  position: fixed;
+  background-color: black;
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.Travelling img {
+  height: 150px;
+  width: 150px;
+}
 
 @media screen and (max-width: 600px) {
   .hideonmobile {

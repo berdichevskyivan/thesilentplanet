@@ -13,8 +13,8 @@ import Resources from './Resources';
 import UserProfile from './UserProfile';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
-import videoPath from './resources/video/forest.mp4';
 import connectedPath from './resources/images/ui/connected.png';
+import travellingPath from './resources/images/ui/loadingscreen.gif';
 
 class App extends React.Component {
 
@@ -22,6 +22,7 @@ class App extends React.Component {
     super();
     this.state = {
       playerName:null,
+      zoneVideoUrl:null,
       mouseIsOver:false,
       mouseIsOverResourceZone:false,
       playerInfo:null,
@@ -38,6 +39,7 @@ class App extends React.Component {
       globalChatMessages:[],
       npcInZone:[],
       resourcesInZone:[],
+      otherZones:[],
       showPersonalInfo:true,
       showZoneInfo:false,
       showConsole:true,
@@ -45,7 +47,8 @@ class App extends React.Component {
       showLocalChat:false,
       showEquipment:true,
       showItems:false,
-      showResources:false
+      showResources:false,
+      showLoading:false
     }
     this.socket = null;
     this.zoneSocket = null;
@@ -117,11 +120,15 @@ class App extends React.Component {
 
   componentWillMount(){
     console.log('executing');
-
   }
 
   componentDidMount(){
 
+    this.callThisFunction();
+
+  }
+
+  callThisFunction = ()=>{
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username===null || userUniqueID===null){
@@ -130,24 +137,91 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
-      this.zoneSocket = io('ws://192.168.11.152:5000/first-zone-namespace', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
           this.props.history.push('/login');
           this.socket.disconnect();
-          this.zoneSocket.disconnect();
+          if(this.zoneSocket!=null) this.zoneSocket.disconnect();
         }else{
           const socket = this.socket;
-          const zoneSocket = this.zoneSocket;
 
           socket.emit('getPlayerInformation');
 
           socket.on('getPlayerInformation',(data)=>{
             this.setState({
-              playerInfo:data
+              playerInfo:data,
+              zoneVideoUrl:data.zone_video_url
             });
+
+            this.zoneSocket = io('ws://192.168.0.14:5000'+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+            const zoneSocket = this.zoneSocket;
+
+            zoneSocket.on('changeZone',()=>{
+              //window.location.reload();
+              this.setState({
+                showLoading:true
+              },()=>{
+                this.callThisFunction();
+              })
+
+            });
+
+            zoneSocket.on('usersInZone',(data)=>{
+              this.setState({
+                usersInZone:data
+              });
+            });
+
+            zoneSocket.on('consoleMessage', (msg)=>{
+              let newConsoleMessages = this.state.consoleMessages;
+              newConsoleMessages.push({message:msg});
+
+              this.setState({
+                consoleMessages:newConsoleMessages
+              },()=>{
+                var chatDiv = document.getElementById('consoleMessages');
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+              });
+            });
+
+            zoneSocket.on('localChatMessage', (msg)=>{
+              let newLocalChatMessages = this.state.localChatMessages;
+              newLocalChatMessages.push({message:msg});
+
+              this.setState({
+                localChatMessages:newLocalChatMessages
+              },()=>{
+                var chatDiv = document.getElementById('localChatMessages');
+                chatDiv.scrollTop = chatDiv.scrollHeight;
+              });
+            });
+
+            zoneSocket.on('getZoneInformation',(data)=>{
+              this.setState({
+                zoneInfo:data
+              });
+            });
+
+            zoneSocket.on('getOtherZones',(data)=>{
+              this.setState({
+                otherZones:data
+              });
+            });
+
+            zoneSocket.on('generateZoneNpc',(data)=>{
+              this.setState({
+                npcInZone:data
+              });
+            });
+
+            zoneSocket.on('generateZoneResources',(data)=>{
+              this.setState({
+                resourcesInZone:data
+              });
+            });
+
           });
 
           socket.on('getPlayerEquipment',(data)=>{
@@ -181,43 +255,6 @@ class App extends React.Component {
             });
           });
 
-          socket.on('logout',()=>{
-            localStorage.clear();
-            this.props.history.push('/login');
-            socket.disconnect();
-            zoneSocket.disconnect();
-          });
-
-          zoneSocket.on('usersInZone',(data)=>{
-            this.setState({
-              usersInZone:data
-            });
-          });
-
-          zoneSocket.on('consoleMessage', (msg)=>{
-            let newConsoleMessages = this.state.consoleMessages;
-            newConsoleMessages.push({message:msg});
-
-            this.setState({
-              consoleMessages:newConsoleMessages
-            },()=>{
-              var chatDiv = document.getElementById('consoleMessages');
-              chatDiv.scrollTop = chatDiv.scrollHeight;
-            });
-          });
-
-          zoneSocket.on('localChatMessage', (msg)=>{
-            let newLocalChatMessages = this.state.localChatMessages;
-            newLocalChatMessages.push({message:msg});
-
-            this.setState({
-              localChatMessages:newLocalChatMessages
-            },()=>{
-              var chatDiv = document.getElementById('localChatMessages');
-              chatDiv.scrollTop = chatDiv.scrollHeight;
-            });
-          });
-
           socket.on('globalChatMessage', (msg)=>{
             let newGlobalChatMessages = this.state.globalChatMessages;
             newGlobalChatMessages.push({message:msg});
@@ -230,22 +267,11 @@ class App extends React.Component {
             });
           });
 
-          zoneSocket.on('getZoneInformation',(data)=>{
-            this.setState({
-              zoneInfo:data
-            });
-          });
-
-          zoneSocket.on('generateZoneNpc',(data)=>{
-            this.setState({
-              npcInZone:data
-            });
-          });
-
-          zoneSocket.on('generateZoneResources',(data)=>{
-            this.setState({
-              resourcesInZone:data
-            });
+          socket.on('logout',()=>{
+            localStorage.clear();
+            this.props.history.push('/login');
+            this.socket.disconnect();
+            this.zoneSocket.disconnect();
           });
 
           var npcZone = document.getElementsByClassName('NpcZone')[0];
@@ -261,10 +287,27 @@ class App extends React.Component {
               else resourceZone.scrollLeft -= 50;
             }
           });
+
+          this.checkForVideo();
+
+          document.getElementById('m').focus();
         }
+
       });
     }
+  }
 
+  checkForVideo = ()=>{
+    setTimeout(()=>{
+      var video = document.getElementById("myVideo");
+      if ( video.readyState === 4 ) {
+        this.setState({
+          showLoading:false
+        });
+      }else{
+        setTimeout(this.checkForVideo,500);
+      }
+    },500)
   }
 
   handleConsoleKeyPress = (event) => {
@@ -283,6 +326,12 @@ class App extends React.Component {
     if(event.key === 'Enter'){
       this.submitGlobalChatMessage(event);
     }
+  }
+
+  handleChangeZone = (event)=>{
+    var zone_id = event.target.value;
+    var player_id = this.state.playerInfo.player_id;
+    this.zoneSocket.emit('changeZone',{ zone_id:zone_id,player_id:player_id });
   }
 
   handleLogout = ()=>{
@@ -304,10 +353,12 @@ class App extends React.Component {
 
     return (
       <div className="App">
-
+        <div className="Travelling" style={this.state.showLoading?{'display':'flex'}:{'display':'none'}}>
+          <img src={travellingPath} />
+        </div>
         <div className="container-fluid">
-          <video autoPlay muted loop id="myVideo">
-            <source src={videoPath} type="video/mp4" />
+          <video autoPlay muted loop id="myVideo" key={this.state.zoneVideoUrl}>
+            <source src={this.state.zoneVideoUrl} type="video/mp4" />
           </video>
           <div className="row WorldView fixed-top">
             <div className="col-md-2 col-sm-2 worldcolumn hideonmobile">
@@ -343,6 +394,11 @@ class App extends React.Component {
                 </div>
               </div>
               <div className="row OtherZones">
+                <ul>
+                  { this.state.otherZones.map((zone)=>{
+                    return <li value={zone.zone_id} onClick={this.handleChangeZone}>{zone.zone_name}</li>
+                  }) }
+                </ul>
               </div>
             </div>
           </div>

@@ -39,7 +39,9 @@ CREATE TABLE zones (
   zone_temperature SMALLINT,
   zone_text TEXT,
   zone_type VARCHAR(20),
-  zone_em_disturbance SMALLINT
+  zone_em_disturbance SMALLINT,
+  zone_namespace TEXT,
+  zone_video_url TEXT
 );
 
 CREATE TABLE zone_resources (

@@ -44,7 +44,6 @@ if (!isDev && cluster.isMaster) {
   });
 
   const io = socketio(server);
-  const firstZoneNsp = io.of('/first-zone-namespace');
 
   var loggedInUsers = {};
 
@@ -117,12 +116,6 @@ if (!isDev && cluster.isMaster) {
 
   });
 
-  const mobsInFirstZone = [];
-  const resourcesInFirstZone = [];
-  let mobCount = 0;
-  let resourceCount = 0;
-  zoneController.onConnectionToZoneNsp(firstZoneNsp,db,mobsInFirstZone);
-  zoneController.mobSpawn(db,firstZoneNsp,mobsInFirstZone,mobCount,1);
-  zoneController.resourceSpawn(db,firstZoneNsp,resourcesInFirstZone,resourceCount,1);
+  zoneController.initializeZones(io);
 
 }

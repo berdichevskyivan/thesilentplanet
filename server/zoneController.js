@@ -1,22 +1,57 @@
-const usersInZone = [];
+const db = require('./dbcontroller.js');
+
+var availableZones = [];
+
+const initializeZones = (io)=>{
+  db.pool.query('select * from zones;',(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+
+      var zoneCount = res.rows.length;
+
+      for(var i = 0 ; i < zoneCount ; i++){
+        var zone = {
+          zone_nsp:io.of(res.rows[i].zone_namespace),
+          zone_namespace:res.rows[i].zone_namespace,
+          zone_name:res.rows[i].zone_name,
+          zone_id:res.rows[i].zone_id,
+          usersInZone:[],
+          mobsInZone:[],
+          resourcesInZone:[],
+          mobCountInZone:0,
+          resourceCountInZone:0
+        }
+        availableZones.push(zone);
+      }
+
+      for(var i = 0; i < availableZones.length ; i++){
+        onConnectionToZoneNsp(availableZones[i].zone_nsp,db,availableZones[i].mobsInZone,availableZones[i].zone_id,availableZones[i].usersInZone);
+        mobSpawn(db,availableZones[i].zone_nsp,availableZones[i].mobsInZone,availableZones[i].mobCountInZone,availableZones[i].zone_id);
+        resourceSpawn(db,availableZones[i].zone_nsp,availableZones[i].resourcesInZone,availableZones[i].resourceCountInZone,availableZones[i].zone_id);
+      }
+
+    }
+  });
+}
 
 const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId)=>{
   setInterval(()=>{
     console.log('Generating Mob for Zone '+zoneId);
-    db.getNpcFromZoneAndEmit(1,nsp,mobsInZone,mobCount);
+    db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
     mobCount++;
-  },120000);
+  },220000);
 };
 
 const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId)=>{
   setInterval(()=>{
     console.log('Generating Resource for Zone '+zoneId);
-    db.getResourceFromZoneAndEmit(1,nsp,resourcesInZone,resourceCount);
+    db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
     resourceCount++;
-  },110000);
+  },220000);
 };
 
-const onConnectionToZoneNsp = (nsp,db,mobsInZone)=>{
+const onConnectionToZoneNsp = (nsp,db,mobsInZone,zoneId,usersInZone)=>{
   nsp.on('connection',function(socket){
     socket.username = socket.handshake.query.username;
     console.log('User '+socket.username+' has joined the a zone.');
@@ -31,7 +66,8 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone)=>{
     }
 
     nsp.emit('usersInZone',usersInZone);
-    db.getZoneInformationAndEmit(socket,1);
+    db.getZoneInformationAndEmit(socket,zoneId);
+    db.getOtherZonesAndEmit(socket,zoneId);
 
     socket.on('attackNpc',function(data){
       var attackedNpcIndex=null;
@@ -58,6 +94,10 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone)=>{
       nsp.emit('localChatMessage',msg);
     });
 
+    socket.on('changeZone',function(data){
+      db.changeZoneAndEmit(socket,data.player_id,data.zone_id);
+    });
+
     socket.on('disconnect',function(){
       console.log('User '+socket.username+' disconnected from the zone.');
       var disconnectedId = null;
@@ -76,5 +116,6 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone)=>{
 module.exports = {
   onConnectionToZoneNsp:onConnectionToZoneNsp,
   mobSpawn:mobSpawn,
-  resourceSpawn:resourceSpawn
+  resourceSpawn:resourceSpawn,
+  initializeZones:initializeZones
 }
