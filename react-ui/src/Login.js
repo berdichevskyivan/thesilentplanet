@@ -30,7 +30,7 @@ class Login extends React.Component {
       this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='valid'){
-          this.props.history.push('/');
+          this.props.history.push('/world');
         }else{
           console.log('Invalid session credentials')
           localStorage.clear();
@@ -55,7 +55,7 @@ class Login extends React.Component {
         UserProfile.setUniqueID(data.userUniqueID);
         localStorage.setItem('username',data.username);
         localStorage.setItem('userUniqueID',data.userUniqueID);
-        this.props.history.push('/');
+        this.props.history.push('/world');
       }
     });
 
@@ -69,7 +69,7 @@ class Login extends React.Component {
         UserProfile.setUniqueID(data.userUniqueID);
         localStorage.setItem('username',data.username);
         localStorage.setItem('userUniqueID',data.userUniqueID);
-        this.props.history.push('/');
+        this.props.history.push('/world');
       }
     });
 

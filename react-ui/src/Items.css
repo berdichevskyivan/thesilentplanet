@@ -30,4 +30,5 @@
 .Items ul li p#itemName {
   width: 25%;
   text-align: center;
+  cursor:pointer;
 }

@@ -86,7 +86,11 @@ class App extends React.Component {
     var message = this.state.consoleInputMessage;
     if (message==='') return false;
     if (message==='logout') this.handleLogout();
-    this.socket.emit('consoleMessage',message);
+    if (message==='clear'){
+      this.setState({consoleMessages:[],consoleInputMessage:''});
+      return false;
+    }
+    this.socket.emit('consoleMessage','Invalid command: '+message);
     this.setState({
       consoleInputMessage:''
     });
@@ -119,20 +123,20 @@ class App extends React.Component {
   }
 
   componentWillMount(){
-    console.log('executing');
+    this.setState({
+      showLoading:true
+    });
   }
 
   componentDidMount(){
-
     this.callThisFunction();
-
   }
 
   callThisFunction = ()=>{
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username===null || userUniqueID===null){
-      this.props.history.push('/login');
+      this.props.history.push('/');
     }else{
       this.setState({
         playerName:username
@@ -141,7 +145,7 @@ class App extends React.Component {
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
-          this.props.history.push('/login');
+          this.props.history.push('/');
           this.socket.disconnect();
           if(this.zoneSocket!=null) this.zoneSocket.disconnect();
         }else{
@@ -159,9 +163,14 @@ class App extends React.Component {
             const zoneSocket = this.zoneSocket;
 
             zoneSocket.on('changeZone',()=>{
-              //window.location.reload();
+              this.socket.disconnect();
+              this.zoneSocket.disconnect();
               this.setState({
-                showLoading:true
+                showLoading:true,
+                localChatMessages:[],
+                usersInZone:[],
+                npcInZone:[],
+                resourcesInZone:[]
               },()=>{
                 this.callThisFunction();
               })
@@ -171,6 +180,12 @@ class App extends React.Component {
             zoneSocket.on('usersInZone',(data)=>{
               this.setState({
                 usersInZone:data
+              });
+            });
+
+            zoneSocket.on('getPlayerResources',(data)=>{
+              this.setState({
+                playerResources:data
               });
             });
 
@@ -269,7 +284,7 @@ class App extends React.Component {
 
           socket.on('logout',()=>{
             localStorage.clear();
-            this.props.history.push('/login');
+            this.props.history.push('/');
             this.socket.disconnect();
             this.zoneSocket.disconnect();
           });
@@ -346,6 +361,16 @@ class App extends React.Component {
     });
   }
 
+  collectResource = (targetName,resourceName,resourceId)=>{
+    this.zoneSocket.emit('collectResource',{
+      collectingUser:this.state.playerInfo.player_name,
+      collectingUserId:this.state.playerInfo.player_id,
+      collectedResource:targetName,
+      collectedResourceName:resourceName,
+      collectedResourceId:resourceId
+    });
+  }
+
   render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
@@ -378,7 +403,7 @@ class App extends React.Component {
             <div className="col-md-8 col-sm-8 worldcolumn">
               <div className="row ResourceZone" style={rowOrColumnForResource} onMouseOver={ ()=>{this.setState({mouseIsOverResourceZone:true})}} onMouseOut={()=>{this.setState({mouseIsOverResourceZone:false})}}>
                 { this.state.resourcesInZone.map((resource)=>{
-                  return <ResourceCard resource={resource} />
+                  return <ResourceCard resource={resource} collectResource={this.collectResource} />
                 }) }
               </div>
               <div className="row NpcZone" style={rowOrColumn} onMouseOver={ ()=>{this.setState({mouseIsOver:true})}} onMouseOut={()=>{this.setState({mouseIsOver:false})}} >

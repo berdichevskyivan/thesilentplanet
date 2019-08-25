@@ -29,4 +29,9 @@
 
 .Equipment ul li p#item {
   font-weight: lighter;
+  cursor:pointer;
+}
+
+.emptyitem {
+  cursor:default !important;
 }

@@ -1,4 +1,5 @@
 import React from 'react';
+import HtmlTooltip from './HtmlTooltip';
 import './ZoneInfo.css';
 
 const ZoneInfo = (props)=>{
@@ -17,7 +18,17 @@ const ZoneInfo = (props)=>{
       <div className="col-md col-sm PlayerStatColumn">
         <div className="PlayerStatCell">
           <p>Name</p>
-          <p className="StatValue">{zone.zone_name}</p>
+          <HtmlTooltip
+           title={
+             <React.Fragment>
+               {zone.zone_text}
+             </React.Fragment>
+           }
+           placement="right"
+         >
+           <p className="StatValue" id="zoneName">{zone.zone_name}</p>
+         </HtmlTooltip>
+
         </div>
         <div className="PlayerStatCell">
           <p>Location</p>

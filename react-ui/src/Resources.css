@@ -30,4 +30,5 @@
 .Resources ul li p#resourceName {
   width: 25%;
   text-align: center;
+  cursor:pointer;
 }

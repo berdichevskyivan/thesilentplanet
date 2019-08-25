@@ -1,7 +1,9 @@
 import React from 'react';
+import HtmlTooltip from './HtmlTooltip';
 import './Resources.css';
 
 const Resources = (props)=>{
+
   let playerResources = props.playerResources;
 
   let style = {};
@@ -19,7 +21,16 @@ const Resources = (props)=>{
          return <li>
                  <p>{resource.amount}</p>
                  <p>x</p>
-                 <p id="resourceName">{resource.resource_name}</p>
+                 <HtmlTooltip
+                  title={
+                    <React.Fragment>
+                      {resource.resource_text}
+                    </React.Fragment>
+                  }
+                  placement="top"
+                >
+                  <p id="resourceName">{resource.resource_name}</p>
+                </HtmlTooltip>
                 </li>
        }) }
       </ul>

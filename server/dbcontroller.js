@@ -82,7 +82,7 @@ const getOtherZonesAndEmit = (socket,zone_id)=>{
   });
 }
 
-const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInFirstZone,mobCount)=>{
+const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInZone,mobCount)=>{
   pool.query('select b.* from zone_npc a, npc b where a.npc_id = b.npc_id and zone_id=$1 order by random() limit 1',[zone_id],(err,res)=>{
     if(err){
       console.log(err);
@@ -91,13 +91,13 @@ const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInFirstZone,mobCount)=>{
       var targetName = res.rows[0].npc_name.toLowerCase().replace(/\s/g, "");
       res.rows[0].target_name = targetName+'@'+(mobCount+1);
       res.rows[0].current_stability = res.rows[0].stability;
-      mobsInFirstZone.push(res.rows[0]);
-      nsp.emit('generateZoneNpc',mobsInFirstZone);
+      mobsInZone.push(res.rows[0]);
+      nsp.emit('generateZoneNpc',mobsInZone);
     }
   });
 }
 
-const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone,resourceCount)=>{
+const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInZone,resourceCount)=>{
   pool.query('select b.resource_id,b.resource_name,b.resource_text,b.img_url from zone_resources a , resources b where a.resource_id = b.resource_id and zone_id=$1 order by random() limit 1',[zone_id],(err,res)=>{
     if(err){
       console.log(err);
@@ -105,8 +105,8 @@ const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInFirstZone,resourceCou
       console.log('RESOURCE COUNT IS ->'+(resourceCount+1));
       var targetName = res.rows[0].resource_name.toLowerCase().replace(/\s/g, "");
       res.rows[0].target_name = targetName+'@'+(resourceCount+1);
-      resourcesInFirstZone.push(res.rows[0]);
-      nsp.emit('generateZoneResources',resourcesInFirstZone);
+      resourcesInZone.push(res.rows[0]);
+      nsp.emit('generateZoneResources',resourcesInZone);
     }
   });
 }
@@ -155,6 +155,41 @@ const changeZoneAndEmit = (socket,player_id,zone_id)=>{
   });
 }
 
+const addResourceToPlayerAndEmit = (data,resourcesInZone,nsp,socket)=>{
+  pool.query('update player_resources set amount=amount+1 where player_id = $1 and resource_id = $2;',[data.collectingUserId,data.collectedResourceId],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      if(res.rowCount>0){
+        deleteResourceFromListAndEmit(data,resourcesInZone,nsp,socket);
+      }else{
+        pool.query('insert into player_resources values($1,$2,$3)',[data.collectingUserId,data.collectedResourceId,1],(err,res)=>{
+          if(err){
+            console.log(err);
+          }else{
+            deleteResourceFromListAndEmit(data,resourcesInZone,nsp,socket);
+          }
+        });
+      }
+    }
+  });
+}
+
+const deleteResourceFromListAndEmit = (data,resourcesInZone,nsp,socket)=>{
+  var collectedResourceIndex=null;
+  var collectedResource = resourcesInZone.find(function(resource,index){
+    if(resource.target_name === data.collectedResource){
+      collectedResourceIndex=index;
+      return true;
+    }
+  });
+  resourcesInZone.splice(collectedResourceIndex,1);
+  nsp.emit('generateZoneResources',resourcesInZone);
+  getPlayerResourcesAndEmit(socket);
+  socket.emit('consoleMessage','You collected '+data.collectedResourceName+'.');
+  nsp.emit('localChatMessage',data.collectingUser+' has collected '+data.collectedResourceName+'.');
+}
+
 module.exports = {
   pool:pool,
   getPlayerInfoAndEmit:getPlayerInfoAndEmit,
@@ -167,5 +202,6 @@ module.exports = {
   getNpcFromZoneAndEmit:getNpcFromZoneAndEmit,
   getResourceFromZoneAndEmit:getResourceFromZoneAndEmit,
   insertUsernameAndPasswordAndEmit:insertUsernameAndPasswordAndEmit,
-  verifyUsernameAndPasswordAndEmit:verifyUsernameAndPasswordAndEmit
+  verifyUsernameAndPasswordAndEmit:verifyUsernameAndPasswordAndEmit,
+  addResourceToPlayerAndEmit:addResourceToPlayerAndEmit
 }

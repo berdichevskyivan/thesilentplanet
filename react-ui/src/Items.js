@@ -1,5 +1,6 @@
 import React from 'react';
 import './Items.css';
+import HtmlTooltip from './HtmlTooltip';
 
 const Items = (props)=>{
 
@@ -20,12 +21,23 @@ const Items = (props)=>{
          return <li>
                  <p>{item.amount}</p>
                  <p>x</p>
-                 <p id="itemName">{item.item_name}</p>
+
+                 <HtmlTooltip
+                  title={
+                    <React.Fragment>
+                      {item.item_text}
+                    </React.Fragment>
+                  }
+                  placement="top"
+                >
+                  <p id="itemName">{item.item_name}</p>
+                </HtmlTooltip>
                 </li>
        }) }
       </ul>
     </div>
   );
+
 }
 
 export default Items;

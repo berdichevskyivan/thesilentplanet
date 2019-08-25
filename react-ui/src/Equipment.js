@@ -1,4 +1,5 @@
 import React from 'react';
+import HtmlTooltip from './HtmlTooltip';
 import './Equipment.css';
 
 const Equipment = (props)=>{
@@ -17,7 +18,19 @@ const Equipment = (props)=>{
     <div className="Equipment" style={style}>
      <ul>
       { playerEquipment.map((equipmentSlot)=>{
-        return <li><p id="slot">{equipmentSlot.equipment_slot_name}</p><p id="item">{equipmentSlot.item_name===null?'Empty':equipmentSlot.item_name}</p></li>
+        return <li><p id="slot">{equipmentSlot.equipment_slot_name}</p>
+        {equipmentSlot.item_name===null?<p id="item" className="emptyitem">Empty</p>:
+        <HtmlTooltip
+         title={
+           <React.Fragment>
+             {equipmentSlot.item_text}
+           </React.Fragment>
+         }
+         placement="top"
+       >
+        <p id="item">{equipmentSlot.item_name}</p>
+       </HtmlTooltip>}
+        </li>
       }) }
      </ul>
     </div>

@@ -1,6 +1,6 @@
 {
   "name": "TheSilentPlanet",
-  "version": "0.3.0",
+  "version": "0.3.5",
   "description": "A Multiplayer Online RPG Game based in the future",
   "engines": {
     "node": "10.x"

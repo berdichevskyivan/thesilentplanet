@@ -1,5 +1,6 @@
 import React from 'react';
 import './EnemyCard.css';
+import HtmlTooltip from './HtmlTooltip';
 import crosshairPath from './resources/images/ui/crosshair.png';
 import repairPath from './resources/images/ui/repair.png';
 import talkPath from './resources/images/ui/talk.png';
@@ -66,7 +67,16 @@ const EnemyCard = (props)=>{
         <img src={ require(`${ props.npc.img_url }`) } />
       </div>
       <div className="row EnemyTitleRow">
-        <p>{props.npc.npc_name}</p>
+        <HtmlTooltip
+         title={
+           <React.Fragment>
+             {props.npc.npc_text}
+           </React.Fragment>
+         }
+         placement="top"
+       >
+         <p id="npcName">{props.npc.npc_name}</p>
+       </HtmlTooltip>
         <p>{props.npc.target_name}</p>
       </div>
       <div className="row EnemyStatsRow">

@@ -36,6 +36,10 @@
   color: lime;
 }
 
+.EnemyTitleRow p#npcName {
+  cursor:pointer;
+}
+
 .EnemyStatsRow {
   height: 15%;
   width: 100%;
