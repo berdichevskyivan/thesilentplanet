@@ -141,7 +141,7 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
@@ -159,7 +159,7 @@ class App extends React.Component {
               zoneVideoUrl:data.zone_video_url
             });
 
-            this.zoneSocket = io('ws://192.168.0.14:5000'+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+            this.zoneSocket = io('ws://192.168.11.152:5000'+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
             const zoneSocket = this.zoneSocket;
 
             zoneSocket.on('changeZone',()=>{
@@ -186,6 +186,12 @@ class App extends React.Component {
             zoneSocket.on('getPlayerResources',(data)=>{
               this.setState({
                 playerResources:data
+              });
+            });
+
+            zoneSocket.on('getPlayerInformation',(data)=>{
+              this.setState({
+                playerInfo:data
               });
             });
 
@@ -369,6 +375,14 @@ class App extends React.Component {
     });
   }
 
+  stealFromNpc = (targetName)=>{
+    this.zoneSocket.emit('stealFromNpc',{
+      stealingUser:this.state.playerInfo.player_name,
+      stolenFromTarget:targetName,
+      amountStolen:1
+    });
+  }
+
   collectResource = (targetName,resourceName,resourceId)=>{
     this.zoneSocket.emit('collectResource',{
       collectingUser:this.state.playerInfo.player_name,
@@ -416,7 +430,7 @@ class App extends React.Component {
               </div>
               <div className="row NpcZone" style={rowOrColumn} onMouseOver={ ()=>{this.setState({mouseIsOver:true})}} onMouseOut={()=>{this.setState({mouseIsOver:false})}} >
                 { this.state.npcInZone.map((npc)=>{
-                  return <EnemyCard npc={npc} attackNpc={this.attackNpc} repairNpc={this.repairNpc} />
+                  return <EnemyCard npc={npc} attackNpc={this.attackNpc} repairNpc={this.repairNpc} stealFromNpc={this.stealFromNpc} />
                 }) }
               </div>
             </div>

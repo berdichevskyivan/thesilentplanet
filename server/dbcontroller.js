@@ -2,8 +2,8 @@ const { Client, Pool } = require('pg');
 
 const pool = new Pool({
   user:'postgres',
-  //password:'dgtic123',
-  password:'rakmodar',
+  password:'dgtic123',
+  //password:'rakmodar',
   host:'localhost',
   database:'thesilentplanet',
   port:5432
@@ -91,6 +91,7 @@ const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInZone,mobCount)=>{
       var targetName = res.rows[0].npc_name.toLowerCase().replace(/\s/g, "");
       res.rows[0].target_name = targetName+'@'+(mobCount+1);
       res.rows[0].current_stability = res.rows[0].stability;
+      res.rows[0].current_currency = res.rows[0].currency;
       mobsInZone.push(res.rows[0]);
       nsp.emit('generateZoneNpc',mobsInZone);
     }
@@ -175,6 +176,18 @@ const addResourceToPlayerAndEmit = (data,resourcesInZone,nsp,socket)=>{
   });
 }
 
+const stealFromNpcAndEmit = (socket,nsp,amountStolen,data)=>{
+  pool.query('update players set currency=currency+$1 where player_name = $2;',[amountStolen,data.stealingUser],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      getPlayerInfoAndEmit(socket);
+      socket.emit('consoleMessage','You stole '+data.amountStolen+' currency from '+data.stolenFromTarget+'.');
+      nsp.emit('localChatMessage',data.stealingUser+' has stolen '+data.amountStolen+' currency from '+data.stolenFromTarget+'.');
+    }
+  });
+}
+
 const deleteResourceFromListAndEmit = (data,resourcesInZone,nsp,socket)=>{
   var collectedResourceIndex=null;
   var collectedResource = resourcesInZone.find(function(resource,index){
@@ -203,5 +216,6 @@ module.exports = {
   getResourceFromZoneAndEmit:getResourceFromZoneAndEmit,
   insertUsernameAndPasswordAndEmit:insertUsernameAndPasswordAndEmit,
   verifyUsernameAndPasswordAndEmit:verifyUsernameAndPasswordAndEmit,
-  addResourceToPlayerAndEmit:addResourceToPlayerAndEmit
+  addResourceToPlayerAndEmit:addResourceToPlayerAndEmit,
+  stealFromNpcAndEmit:stealFromNpcAndEmit
 }

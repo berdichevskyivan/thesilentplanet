@@ -110,25 +110,63 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
           return true;
         }
       });
-      var currentHealth = mobsInZone[repairedNpcIndex].current_stability;
-      var totalHealth = mobsInZone[repairedNpcIndex].stability;
 
-      if(currentHealth===totalHealth){
-        socket.emit('consoleMessage',data.repairedTarget+' already has full health.');
-        return;
-      }
-
-      if((currentHealth+data.spRepair)>totalHealth){
-        mobsInZone[repairedNpcIndex].current_stability = totalHealth;
-        socket.emit('consoleMessage',data.repairedTarget+' already has ');
-        nsp.emit('localChatMessage',data.repairingUser+' has repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+      if(typeof mobsInZone[repairedNpcIndex] === 'undefined'){
+        nsp.emit('generateZoneNpc',mobsInZone);
       }else{
-        mobsInZone[repairedNpcIndex].current_stability = currentHealth+data.spRepair;
-        socket.emit('consoleMessage','You repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
-        nsp.emit('localChatMessage',data.repairingUser+' has repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+        var currentHealth = mobsInZone[repairedNpcIndex].current_stability;
+        var totalHealth = mobsInZone[repairedNpcIndex].stability;
+
+        if(currentHealth===totalHealth){
+          socket.emit('consoleMessage',data.repairedTarget+' already has full health.');
+          return;
+        }
+
+        if((currentHealth+data.spRepair)>totalHealth){
+          mobsInZone[repairedNpcIndex].current_stability = totalHealth;
+          socket.emit('consoleMessage','You repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+          nsp.emit('localChatMessage',data.repairingUser+' has repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+        }else{
+          mobsInZone[repairedNpcIndex].current_stability = currentHealth+data.spRepair;
+          socket.emit('consoleMessage','You repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+          nsp.emit('localChatMessage',data.repairingUser+' has repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+        }
+
+        nsp.emit('generateZoneNpc',mobsInZone);
       }
 
-      nsp.emit('generateZoneNpc',mobsInZone);
+    });
+
+    socket.on('stealFromNpc',function(data){
+      var stolenFromNpcIndex=null;
+      var stolenFromNpc = mobsInZone.find(function(npc,index){
+        if(npc.target_name === data.stolenFromTarget){
+          stolenFromNpcIndex=index;
+          return true;
+        }
+      });
+
+      if(typeof mobsInZone[stolenFromNpcIndex] === 'undefined'){
+        nsp.emit('generateZoneNpc',mobsInZone);
+      }else{
+        var currentCurrency = mobsInZone[stolenFromNpcIndex].current_currency;
+        var totalCurrency = mobsInZone[stolenFromNpcIndex].currency;
+
+        if(currentCurrency===0){
+          socket.emit('consoleMessage',data.stolenFromTarget+' has nothing to be stolen.');
+          return;
+        }
+
+        if((currentCurrency-data.amountStolen)>0){
+          mobsInZone[stolenFromNpcIndex].current_currency = (currentCurrency-data.amountStolen);
+          db.stealFromNpcAndEmit(socket,nsp,data.amountStolen,data);
+        }else{
+          mobsInZone[stolenFromNpcIndex].current_currency = 0;
+          db.stealFromNpcAndEmit(socket,nsp,currentCurrency,data);
+        }
+
+        nsp.emit('generateZoneNpc',mobsInZone);
+      }
 
     });
 
