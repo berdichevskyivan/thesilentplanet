@@ -27,28 +27,36 @@ const initializeZones = (io)=>{
 
       for(var i = 0; i < availableZones.length ; i++){
         onConnectionToZoneNsp(availableZones[i].zone_nsp,db,availableZones[i].mobsInZone,availableZones[i].resourcesInZone,availableZones[i].zone_id,availableZones[i].usersInZone,availableZones[i].zone_name);
-        mobSpawn(db,availableZones[i].zone_nsp,availableZones[i].mobsInZone,availableZones[i].mobCountInZone,availableZones[i].zone_id);
-        resourceSpawn(db,availableZones[i].zone_nsp,availableZones[i].resourcesInZone,availableZones[i].resourceCountInZone,availableZones[i].zone_id);
+        mobSpawn(db,availableZones[i].zone_nsp,availableZones[i].mobsInZone,availableZones[i].mobCountInZone,availableZones[i].zone_id,availableZones[i].usersInZone);
+        resourceSpawn(db,availableZones[i].zone_nsp,availableZones[i].resourcesInZone,availableZones[i].resourceCountInZone,availableZones[i].zone_id,availableZones[i].usersInZone);
       }
 
     }
   });
 }
 
-const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId)=>{
+const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
   setInterval(()=>{
-    console.log('Generating Mob for Zone '+zoneId);
-    db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
-    mobCount++;
+    if(usersInZone.length>0){
+      console.log('Generating Mob for Zone '+zoneId);
+      db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
+      mobCount++;
+    }else{
+      console.log('No users in zone. Mob spawn halted.')
+    }
   },40000);
 };
 
-const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId)=>{
+const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=>{
   setInterval(()=>{
-    console.log('Generating Resource for Zone '+zoneId);
-    db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
-    resourceCount++;
-  },40000);
+    if(usersInZone.length>0){
+      console.log('Generating Resource for Zone '+zoneId);
+      db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
+      resourceCount++;
+    }else{
+      console.log('No users in zone. Resource spawn halted.')
+    }
+  },120000);
 };
 
 const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZone,zoneName)=>{
@@ -79,15 +87,49 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
           return true;
         }
       });
-      mobsInZone[attackedNpcIndex].current_stability = mobsInZone[attackedNpcIndex].current_stability - data.spDamage;
-      socket.emit('consoleMessage','You attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
-      nsp.emit('localChatMessage',data.attackingUser+' has attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
-      if(mobsInZone[attackedNpcIndex].current_stability<=0){
-        mobsInZone.splice(attackedNpcIndex,1);
-        socket.emit('consoleMessage', data.attackedTarget+' dies.');
-        nsp.emit('localChatMessage',data.attackingUser+' deals a killing blow! '+data.attackedTarget+' dies.');
+      if(typeof mobsInZone[attackedNpcIndex] === 'undefined'){
+        nsp.emit('generateZoneNpc',mobsInZone);
+      }else{
+        mobsInZone[attackedNpcIndex].current_stability = mobsInZone[attackedNpcIndex].current_stability - data.spDamage;
+        socket.emit('consoleMessage','You attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
+        nsp.emit('localChatMessage',data.attackingUser+' has attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
+        if(mobsInZone[attackedNpcIndex].current_stability<=0){
+          mobsInZone.splice(attackedNpcIndex,1);
+          socket.emit('consoleMessage', data.attackedTarget+' dies.');
+          nsp.emit('localChatMessage',data.attackingUser+' deals a killing blow! '+data.attackedTarget+' dies.');
+        }
+        nsp.emit('generateZoneNpc',mobsInZone);
       }
+    });
+
+    socket.on('repairNpc',function(data){
+      var repairedNpcIndex=null;
+      var repairedNpc = mobsInZone.find(function(npc,index){
+        if(npc.target_name === data.repairedTarget){
+          repairedNpcIndex=index;
+          return true;
+        }
+      });
+      var currentHealth = mobsInZone[repairedNpcIndex].current_stability;
+      var totalHealth = mobsInZone[repairedNpcIndex].stability;
+
+      if(currentHealth===totalHealth){
+        socket.emit('consoleMessage',data.repairedTarget+' already has full health.');
+        return;
+      }
+
+      if((currentHealth+data.spRepair)>totalHealth){
+        mobsInZone[repairedNpcIndex].current_stability = totalHealth;
+        socket.emit('consoleMessage',data.repairedTarget+' already has ');
+        nsp.emit('localChatMessage',data.repairingUser+' has repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+      }else{
+        mobsInZone[repairedNpcIndex].current_stability = currentHealth+data.spRepair;
+        socket.emit('consoleMessage','You repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+        nsp.emit('localChatMessage',data.repairingUser+' has repaired '+data.repairedTarget+' for '+data.spRepair+' SP points.');
+      }
+
       nsp.emit('generateZoneNpc',mobsInZone);
+
     });
 
     socket.on('collectResource',function(data){

@@ -95,7 +95,7 @@ const EnemyCard = (props)=>{
           <img id="attack" src={crosshairPath} onClick={()=>{props.attackNpc(props.npc.target_name)}} />
         </div>
         <div className="col-md col-sm ActionColumn">
-          <img id="repair" src={repairPath} />
+          <img id="repair" src={repairPath} onClick={()=>{props.repairNpc(props.npc.target_name)}} />
         </div>
         <div className="col-md col-sm ActionColumn">
           <img id="theft" src={theftPath} />

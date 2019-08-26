@@ -361,6 +361,14 @@ class App extends React.Component {
     });
   }
 
+  repairNpc = (targetName)=>{
+    this.zoneSocket.emit('repairNpc',{
+      repairingUser:this.state.playerInfo.player_name,
+      repairedTarget:targetName,
+      spRepair:1
+    });
+  }
+
   collectResource = (targetName,resourceName,resourceId)=>{
     this.zoneSocket.emit('collectResource',{
       collectingUser:this.state.playerInfo.player_name,
@@ -408,7 +416,7 @@ class App extends React.Component {
               </div>
               <div className="row NpcZone" style={rowOrColumn} onMouseOver={ ()=>{this.setState({mouseIsOver:true})}} onMouseOut={()=>{this.setState({mouseIsOver:false})}} >
                 { this.state.npcInZone.map((npc)=>{
-                  return <EnemyCard npc={npc} attackNpc={this.attackNpc} />
+                  return <EnemyCard npc={npc} attackNpc={this.attackNpc} repairNpc={this.repairNpc} />
                 }) }
               </div>
             </div>
