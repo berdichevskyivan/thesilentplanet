@@ -64,6 +64,12 @@ CREATE TABLE npc (
   img_url TEXT
 );
 
+CREATE TABLE npc_dialogue (
+  dialogue_id SERIAL,
+  npc_id SMALLINT,
+  dialogue_text TEXT
+);
+
 CREATE TABLE npc_resources (
   npc_id SMALLINT,
   resource_id SMALLINT,
@@ -91,7 +97,8 @@ CREATE TABLE items (
   equipment_slot_id SMALLINT,
   item_effect_type VARCHAR(30),
   item_effect_modified_stat VARCHAR(30),
-  item_effect_impact SMALLINT
+  item_effect_impact SMALLINT,
+  item_cost SMALLINT
 );
 
 CREATE TABLE equipment_slots (

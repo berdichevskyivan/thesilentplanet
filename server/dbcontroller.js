@@ -2,8 +2,8 @@ const { Client, Pool } = require('pg');
 
 const pool = new Pool({
   user:'postgres',
-  password:'dgtic123',
-  //password:'rakmodar',
+  //password:'dgtic123',
+  password:'rakmodar',
   host:'localhost',
   database:'thesilentplanet',
   port:5432
@@ -92,7 +92,18 @@ const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInZone,mobCount)=>{
       res.rows[0].target_name = targetName+'@'+(mobCount+1);
       res.rows[0].current_stability = res.rows[0].stability;
       res.rows[0].current_currency = res.rows[0].currency;
-      mobsInZone.push(res.rows[0]);
+      getNpcItemsAndEmit(res.rows[0],mobsInZone,nsp);
+    }
+  });
+}
+
+const getNpcItemsAndEmit = (npc,mobsInZone,nsp)=>{
+  pool.query('select a.amount,b.item_name,b.item_id,b.item_text,b.item_cost from npc_items a, items b where a.item_id = b.item_id and a.npc_id = $1;',[npc.npc_id],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      npc.npc_items = res.rows;
+      mobsInZone.push(npc);
       nsp.emit('generateZoneNpc',mobsInZone);
     }
   });
@@ -188,6 +199,17 @@ const stealFromNpcAndEmit = (socket,nsp,amountStolen,data)=>{
   });
 }
 
+const getNpcDialogueAndEmit = (socket,nsp,data)=>{
+  pool.query('select dialogue_text from npc_dialogue where npc_id = $1 order by random() limit 1',[data.npcId],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      socket.emit('consoleMessage','['+data.npcTargetName+'] '+res.rows[0].dialogue_text);
+      nsp.emit('localChatMessage','['+data.npcTargetName+'] '+res.rows[0].dialogue_text);
+    }
+  });
+}
+
 const deleteResourceFromListAndEmit = (data,resourcesInZone,nsp,socket)=>{
   var collectedResourceIndex=null;
   var collectedResource = resourcesInZone.find(function(resource,index){
@@ -201,6 +223,29 @@ const deleteResourceFromListAndEmit = (data,resourcesInZone,nsp,socket)=>{
   getPlayerResourcesAndEmit(socket);
   socket.emit('consoleMessage','You collected '+data.collectedResourceName+'.');
   nsp.emit('localChatMessage',data.collectingUser+' has collected '+data.collectedResourceName+'.');
+}
+
+const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
+  pool.query('update players set stability = stability - $1 where player_name=$2',[mobInZone.attack_power,user.username],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+      getPlayerInfoAndEmitToNspSocket(nsp,user,mobInZone);
+    }
+  });
+}
+
+const getPlayerInfoAndEmitToNspSocket = (nsp,user,mobInZone)=>{
+  pool.query('select a.*,b.zone_id,b.zone_namespace,b.zone_video_url from players a, zones b where a.current_zone_id=b.zone_id and player_name = $1',[user.username],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
+      nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+      nsp.to(user.socketId).emit('getPlayerInformation',res.rows[0]);
+    }
+  });
 }
 
 module.exports = {
@@ -217,5 +262,7 @@ module.exports = {
   insertUsernameAndPasswordAndEmit:insertUsernameAndPasswordAndEmit,
   verifyUsernameAndPasswordAndEmit:verifyUsernameAndPasswordAndEmit,
   addResourceToPlayerAndEmit:addResourceToPlayerAndEmit,
-  stealFromNpcAndEmit:stealFromNpcAndEmit
+  stealFromNpcAndEmit:stealFromNpcAndEmit,
+  getNpcDialogueAndEmit:getNpcDialogueAndEmit,
+  npcAttackUserAndEmit:npcAttackUserAndEmit
 }

@@ -1,4 +1,5 @@
 const db = require('./dbcontroller.js');
+const tradeController = require('./tradeController.js');
 
 var availableZones = [];
 
@@ -28,6 +29,7 @@ const initializeZones = (io)=>{
       for(var i = 0; i < availableZones.length ; i++){
         onConnectionToZoneNsp(availableZones[i].zone_nsp,db,availableZones[i].mobsInZone,availableZones[i].resourcesInZone,availableZones[i].zone_id,availableZones[i].usersInZone,availableZones[i].zone_name);
         mobSpawn(db,availableZones[i].zone_nsp,availableZones[i].mobsInZone,availableZones[i].mobCountInZone,availableZones[i].zone_id,availableZones[i].usersInZone);
+        npcAttack(db,availableZones[i].zone_nsp,availableZones[i].mobsInZone,availableZones[i].mobCountInZone,availableZones[i].zone_id,availableZones[i].usersInZone);
         resourceSpawn(db,availableZones[i].zone_nsp,availableZones[i].resourcesInZone,availableZones[i].resourceCountInZone,availableZones[i].zone_id,availableZones[i].usersInZone);
       }
 
@@ -36,6 +38,8 @@ const initializeZones = (io)=>{
 }
 
 const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
+  db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
+  mobCount++;
   setInterval(()=>{
     if(usersInZone.length>0){
       console.log('Generating Mob for Zone '+zoneId);
@@ -56,8 +60,65 @@ const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=
     }else{
       console.log('No users in zone. Resource spawn halted.')
     }
-  },120000);
+  },30000);
 };
+
+const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
+  setInterval(()=>{
+    if(usersInZone.length>0 && mobsInZone.length>0){
+      for(let i = 0; i < mobsInZone.length;i++){
+
+        let mobInZone = mobsInZone[i];
+        let attackingUser = mobInZone.attacking_user;
+
+        if(typeof attackingUser === 'undefined'){
+          console.log('Noone is attacking '+mobInZone.target_name+'. Choosing a random target.');
+          let user = retrieveRandomUserFromZoneUsers(usersInZone);
+          console.log('Will attack '+user.username);
+          mobInZone.attacking_user = user.username;
+          db.npcAttackUserAndEmit(nsp,user,mobInZone);
+        }else{
+          console.log(attackingUser+' is attacking '+mobInZone.target_name+'. Attacking it in return.');
+          console.log('retrieving user from json array...');
+          let user = retrieveUserFromZoneUsers(attackingUser,usersInZone);
+          if(user){
+            console.log(user);
+            db.npcAttackUserAndEmit(nsp,user,mobInZone);
+          }else{
+            console.log('user is no longer connected');
+            console.log('retrieving new random user');
+            //Choose a new target
+            user = retrieveRandomUserFromZoneUsers(usersInZone);
+            console.log('Will attack '+user.username);
+            mobInZone.attacking_user = user.username;
+            db.npcAttackUserAndEmit(nsp,user,mobInZone);
+          }
+        }
+
+      }
+      nsp.emit('generateZoneNpc',mobsInZone);
+    }else{
+      console.log('No users or mobs in zone. Mob attack halted.');
+    }
+  },6000);
+};
+
+const retrieveUserFromZoneUsers = (username,usersInZone)=>{
+  let user = false;
+  for(let i = 0 ; i < usersInZone.length ; i++){
+    if(usersInZone[i].username===username){
+      user = usersInZone[i];
+    }
+  }
+  return user;
+}
+
+const retrieveRandomUserFromZoneUsers = (usersInZone)=>{
+  let user = false;
+  let randomIndex = Math.floor((Math.random() * usersInZone.length));
+  user = usersInZone[randomIndex];
+  return user;
+}
 
 const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZone,zoneName)=>{
   nsp.on('connection',function(socket){
@@ -65,12 +126,15 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
     console.log('User '+socket.username+' has joined '+zoneName);
     var shouldPush = true;
     for(var i = 0 ; i < usersInZone.length ; i++){
-      if(usersInZone[i]===socket.username){
+      if(usersInZone[i].username===socket.username){
         shouldPush = false;
       }
     }
     if(shouldPush){
-      usersInZone.push(socket.username);
+      usersInZone.push({
+        username:socket.username,
+        socketId:socket.id
+      });
     }
 
     nsp.emit('usersInZone',usersInZone);
@@ -91,6 +155,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
         nsp.emit('generateZoneNpc',mobsInZone);
       }else{
         mobsInZone[attackedNpcIndex].current_stability = mobsInZone[attackedNpcIndex].current_stability - data.spDamage;
+        mobsInZone[attackedNpcIndex].attacking_user = data.attackingUser;
         socket.emit('consoleMessage','You attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
         nsp.emit('localChatMessage',data.attackingUser+' has attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
         if(mobsInZone[attackedNpcIndex].current_stability<=0){
@@ -153,7 +218,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
         var totalCurrency = mobsInZone[stolenFromNpcIndex].currency;
 
         if(currentCurrency===0){
-          socket.emit('consoleMessage',data.stolenFromTarget+' has nothing to be stolen.');
+          socket.emit('consoleMessage',data.stolenFromTarget+' has nothing you could steal.');
           return;
         }
 
@@ -168,6 +233,14 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
         nsp.emit('generateZoneNpc',mobsInZone);
       }
 
+    });
+
+    socket.on('talkToNpc',function(data){
+      db.getNpcDialogueAndEmit(socket,nsp,data);
+    });
+
+    socket.on('tradeWithNpc',function(data){
+      tradeController.initializeTradingWithNpc(data,socket,nsp,mobsInZone);
     });
 
     socket.on('collectResource',function(data){
@@ -188,7 +261,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
       console.log('User '+socket.username+' has disconnected from '+zoneName);
       var disconnectedId = null;
       for(var i = 0 ; i < usersInZone.length ; i++){
-        if(usersInZone[i]===socket.username){
+        if(usersInZone[i].username===socket.username){
           disconnectedId = i;
         }
       }

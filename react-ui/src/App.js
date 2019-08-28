@@ -11,6 +11,7 @@ import Equipment from './Equipment';
 import Items from './Items';
 import Resources from './Resources';
 import UserProfile from './UserProfile';
+import TradeWithNpcModal from './TradeWithNpcModal';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import connectedPath from './resources/images/ui/connected.png';
@@ -48,7 +49,11 @@ class App extends React.Component {
       showEquipment:true,
       showItems:false,
       showResources:false,
-      showLoading:false
+      showLoading:false,
+      showTradeWithNpcModal:false,
+      itemsBeingTraded:[],
+      tradeSent:false,
+      tradeResponse:''
     }
     this.socket = null;
     this.zoneSocket = null;
@@ -141,7 +146,7 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
@@ -159,7 +164,7 @@ class App extends React.Component {
               zoneVideoUrl:data.zone_video_url
             });
 
-            this.zoneSocket = io('ws://192.168.11.152:5000'+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+            this.zoneSocket = io('ws://192.168.0.14:5000'+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
             const zoneSocket = this.zoneSocket;
 
             zoneSocket.on('changeZone',()=>{
@@ -186,6 +191,12 @@ class App extends React.Component {
             zoneSocket.on('getPlayerResources',(data)=>{
               this.setState({
                 playerResources:data
+              });
+            });
+
+            zoneSocket.on('getPlayerItems',(data)=>{
+              this.setState({
+                playerItems:data
               });
             });
 
@@ -232,6 +243,8 @@ class App extends React.Component {
             });
 
             zoneSocket.on('generateZoneNpc',(data)=>{
+              console.log(data);
+              console.log('hey im here');
               this.setState({
                 npcInZone:data
               });
@@ -241,6 +254,37 @@ class App extends React.Component {
               this.setState({
                 resourcesInZone:data
               });
+            });
+
+            zoneSocket.on('tradeWithNpcResponse',(data)=>{
+              console.log(data);
+              this.setState({
+                tradeSent:false,
+                tradeResponse:data.responseMsg
+              });
+            });
+
+            zoneSocket.on('tradeWithNpc',(data)=>{
+              //This arrives to all sockets in zone, so we need to check that the items in other user's modals are the same Target, we can't just change it
+              console.log(data);
+              var currentItemsBeingTraded = this.state.itemsBeingTraded;
+              if(currentItemsBeingTraded.length < 1){
+                return false;
+              }else{
+                var currentItemsTargetNpc = currentItemsBeingTraded[0].npc_target_name;
+                var itemsBeingTradedResponseTargetName = data.data.npcTargetName;
+                console.log(currentItemsTargetNpc);
+                console.log(itemsBeingTradedResponseTargetName);
+                if(currentItemsTargetNpc===itemsBeingTradedResponseTargetName){
+                  this.setState({
+                    itemsBeingTraded:data.data.tradedItems
+                  });
+                }else{
+                  return false;
+                }
+
+              }
+
             });
 
           });
@@ -383,6 +427,13 @@ class App extends React.Component {
     });
   }
 
+  talkToNpc = (targetName,npcId)=>{
+    this.zoneSocket.emit('talkToNpc',{
+      npcTargetName:targetName,
+      npcId:npcId
+    });
+  }
+
   collectResource = (targetName,resourceName,resourceId)=>{
     this.zoneSocket.emit('collectResource',{
       collectingUser:this.state.playerInfo.player_name,
@@ -393,6 +444,92 @@ class App extends React.Component {
     });
   }
 
+  handleOpenTradeWithNpcModal = (tradedItems)=>{
+    if(tradedItems!==false){
+      this.setState({
+        itemsBeingTraded:tradedItems,
+        showTradeWithNpcModal:true
+      });
+    }else{
+      let newConsoleMessages = this.state.consoleMessages;
+      newConsoleMessages.push({message:'Target has no items to trade.'});
+
+      this.setState({
+        consoleMessages:newConsoleMessages
+      },()=>{
+        var chatDiv = document.getElementById('consoleMessages');
+        chatDiv.scrollTop = chatDiv.scrollHeight;
+      });
+    }
+  }
+
+  handleCloseTradeWithNpcModal = ()=>{
+    this.setState({
+      showTradeWithNpcModal:false
+    },()=>{
+      setTimeout(()=>{
+        this.setState({
+          tradeSent:false,
+          tradeResponse:'',
+          itemsBeingTraded:[]
+        });
+      },150);
+    });
+  }
+
+  handleChangeAmountWanted = (event,itemId)=>{
+    var reg = new RegExp('^[0-9]+$');
+    var value = event.target.value;
+    if(value.match(reg)===null && value!==''){
+      return false;
+    }
+    var newItemsBeingTraded = this.state.itemsBeingTraded;
+    for(var i = 0 ; i < newItemsBeingTraded.length ; i++){
+      if(newItemsBeingTraded[i].item_id===itemId){
+        if(value > newItemsBeingTraded[i].total_amount){
+          return false;
+        }
+        newItemsBeingTraded[i].amount_wanted = +value;
+        newItemsBeingTraded[i].total_price = value * newItemsBeingTraded[i].item_cost;
+      }
+    }
+    this.setState({
+      itemsBeingTraded:newItemsBeingTraded
+    });
+  }
+
+  buyTradedItems = ()=>{
+    var tradedItems = this.state.itemsBeingTraded;
+    var tradedItemsToBeSent = [];
+    var totalPriceToPay = 0;
+    var npcTargetName = '';
+    var zeroCount = 0;
+    for(var i = 0 ; i < tradedItems.length ; i++){
+        if(tradedItems[i].amount_wanted===0){
+          console.log(tradedItems[i].amount_wanted);
+          zeroCount++
+        }
+        totalPriceToPay = totalPriceToPay + tradedItems[i].total_price;
+        npcTargetName = tradedItems[i].npc_target_name;
+        tradedItemsToBeSent.push(tradedItems[i]);
+    }
+    if(zeroCount === tradedItems.length){
+      this.setState({
+        tradeResponse:'Haven\'t bought anything'
+      });
+      return false;
+    }
+    this.zoneSocket.emit('tradeWithNpc',{
+      playerId:this.state.playerInfo.player_id,
+      npcTargetName:npcTargetName,
+      totalPriceToPay:totalPriceToPay,
+      tradedItems:tradedItemsToBeSent
+    });
+    this.setState({
+      tradeSent:true
+    });
+  }
+
   render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
@@ -400,6 +537,8 @@ class App extends React.Component {
 
     return (
       <div className="App">
+        <TradeWithNpcModal showTradeWithNpcModal={this.state.showTradeWithNpcModal} handleCloseTradeWithNpcModal={this.handleCloseTradeWithNpcModal} itemsBeingTraded={this.state.itemsBeingTraded}
+          handleChangeAmountWanted={this.handleChangeAmountWanted} buyTradedItems={this.buyTradedItems} tradeSent={this.state.tradeSent} tradeResponse={this.state.tradeResponse}/>
         <div className="Travelling" style={this.state.showLoading?{'display':'flex'}:{'display':'none'}}>
           <img src={travellingPath} />
         </div>
@@ -417,7 +556,7 @@ class App extends React.Component {
               <div className="row CurrentPlayers">
                 <ul>
                   { this.state.usersInZone.map((user)=>{
-                    return <li><img src={connectedPath} />{user}</li>
+                    return <li><img src={connectedPath} />{user.username}</li>
                   }) }
                 </ul>
               </div>
@@ -430,7 +569,9 @@ class App extends React.Component {
               </div>
               <div className="row NpcZone" style={rowOrColumn} onMouseOver={ ()=>{this.setState({mouseIsOver:true})}} onMouseOut={()=>{this.setState({mouseIsOver:false})}} >
                 { this.state.npcInZone.map((npc)=>{
-                  return <EnemyCard npc={npc} attackNpc={this.attackNpc} repairNpc={this.repairNpc} stealFromNpc={this.stealFromNpc} />
+                  return <EnemyCard npc={npc} attackNpc={this.attackNpc} repairNpc={this.repairNpc}
+                  stealFromNpc={this.stealFromNpc} talkToNpc={this.talkToNpc}
+                  handleOpenTradeWithNpcModal={this.handleOpenTradeWithNpcModal} username={this.state.playerInfo.player_name}/>
                 }) }
               </div>
             </div>

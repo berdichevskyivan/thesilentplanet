@@ -1,0 +1,53 @@
+.ItemBeingTradedRow {
+  margin-top: 10px;
+  margin-bottom: 10px;
+}
+
+.ItemBeingTradedRow input {
+  text-align: center;
+  padding: 0;
+  border: 1px solid lime;
+  width: 40% !important;
+}
+
+.TitleRow p {
+  font-weight: bold;
+}
+
+.ItemBeingTradedColumn {
+  padding: 0 !important;
+  display: flex;
+  flex-flow: row;
+  justify-content: center;
+  align-items: center;
+  text-align: center;
+}
+
+.ButtonRow {
+  margin-top: 30px;
+  justify-content: center;
+  align-items: center;
+  flex-flow: column;
+}
+
+.ButtonRow img{
+  height: 50px;
+  width: 50px;
+  margin-top: 30px;
+}
+
+.ButtonRow button {
+  border: 1px solid lime;
+  outline: none !important;
+}
+
+.ButtonRow button:hover {
+  background: #00ff00b8;
+  color: white;
+}
+
+.TradeResponse {
+  margin-top: 30px;
+  border: 1px solid lime;
+  padding: 10px;
+}

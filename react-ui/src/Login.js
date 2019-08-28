@@ -27,7 +27,7 @@ class Login extends React.Component {
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username!==null && userUniqueID!==null){
-      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='valid'){
           this.props.history.push('/world');
@@ -37,7 +37,7 @@ class Login extends React.Component {
         }
       });
     }else{
-      this.socket = io('ws://192.168.11.152:5000', {transports: ['websocket']});
+      this.socket = io('ws://192.168.0.14:5000', {transports: ['websocket']});
     }
   }
 
@@ -149,7 +149,7 @@ class Login extends React.Component {
     return (
       <div className="Login">
         <video autoPlay muted loop id="myVideo">
-          <source src="./resources/video/tropical.mp4" type="video/mp4" />
+          <source src="./resources/video/qurtz.mp4" type="video/mp4" />
         </video>
         <div className="LoginBox">
           <div className="row LoginTabsRow">
