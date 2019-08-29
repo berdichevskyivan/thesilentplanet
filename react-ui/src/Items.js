@@ -1,6 +1,7 @@
 import React from 'react';
 import './Items.css';
 import HtmlTooltip from './HtmlTooltip';
+import { MenuProvider } from 'react-contexify';
 
 const Items = (props)=>{
 
@@ -18,21 +19,23 @@ const Items = (props)=>{
     <div className="Items" style={style}>
       <ul>
        { playerItems.map((item)=>{
-         return <li>
-                 <p>{item.amount}</p>
-                 <p>x</p>
+         return <MenuProvider id="item_menu_id" style={{'display':'contents'} } onContextMenu={()=>{props.setItemInContextMenu(item)}} >
+                  <li>
+                   <p>{item.amount}</p>
+                   <p>x</p>
 
-                 <HtmlTooltip
-                  title={
-                    <React.Fragment>
-                      {item.item_text}
-                    </React.Fragment>
-                  }
-                  placement="top"
-                >
-                  <p id="itemName">{item.item_name}</p>
-                </HtmlTooltip>
-                </li>
+                   <HtmlTooltip
+                    title={
+                      <React.Fragment>
+                        {item.item_text}
+                      </React.Fragment>
+                    }
+                    placement="top"
+                  >
+                    <p id="itemName">{item.item_name}</p>
+                  </HtmlTooltip>
+                  </li>
+                </MenuProvider>
        }) }
       </ul>
     </div>

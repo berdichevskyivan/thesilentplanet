@@ -53,7 +53,7 @@ const getPlayerResourcesAndEmit = (socket)=>{
 }
 
 const getPlayerItemsAndEmit = (socket)=>{
-  pool.query('select b.*,a.amount from player_items a, items b,players c where a.item_id = b.item_id and a.player_id = c.player_id and c.player_name=$1 order by a.amount desc;',[socket.username],(err,res)=>{
+  pool.query('select b.*,a.amount from player_items a, items b,players c where a.item_id = b.item_id and a.player_id = c.player_id and c.player_name=$1 and a.amount > 0 order by a.amount desc;',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -88,6 +88,10 @@ const getNpcFromZoneAndEmit = (zone_id,nsp,mobsInZone,mobCount)=>{
       console.log(err);
     }else{
       console.log('COUNT IS ->'+(mobCount+1));
+      if(typeof res.rows[0] === 'undefined'){
+        console.log('No mobs in zone '+zone_id);
+        return false;
+      }
       var targetName = res.rows[0].npc_name.toLowerCase().replace(/\s/g, "");
       res.rows[0].target_name = targetName+'@'+(mobCount+1);
       res.rows[0].current_stability = res.rows[0].stability;
@@ -230,8 +234,23 @@ const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
     if(err){
       console.log(err);
     }else{
-      console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
-      getPlayerInfoAndEmitToNspSocket(nsp,user,mobInZone);
+      (async ()=>{
+        const stabilityCheck = await pool.query('select player_id,player_name,player_password,stability from players where player_name=$1',[user.username]);
+        if(stabilityCheck.rows[0].stability < 1){
+          console.log('Player died');
+          nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
+          nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+          nsp.to(user.socketId).emit('consoleMessage','You died.');
+          nsp.to(user.socketId).emit('consoleMessage','Reuploading consciousness into new host...');
+          nsp.emit('localChatMessage',user.username+' died.');
+          nsp.to(user.socketId).emit('deathSignal',{});
+          const deletePlayerFromDatabase = await pool.query('delete from players where player_id='+stabilityCheck.rows[0].player_id);
+          const insertNewPlayer = await pool.query('insert into players(player_name,player_password) VALUES($1,$2);',[stabilityCheck.rows[0].player_name,stabilityCheck.rows[0].player_password]);
+        }else{
+          console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+          getPlayerInfoAndEmitToNspSocket(nsp,user,mobInZone);
+        }
+      })().catch(err=>console.log(err));
     }
   });
 }

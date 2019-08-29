@@ -38,7 +38,7 @@ const EnemyCard = (props)=>{
     var percentage = (props.npc.current_stability * 100) / props.npc.stability ;
     var style = {};
 
-    var backgroundStyle = props.npc.attacking_user === props.username ? {'border':'2px solid red'} : {} ;
+    var backgroundStyle = props.npc.attacking_user === props.username ? {'box-shadow':'red 0px 0px 0px 2px'} : {} ;
 
     if(percentage <= 100 && percentage > 90){
       style={

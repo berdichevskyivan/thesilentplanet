@@ -1,5 +1,6 @@
 const db = require('./dbcontroller.js');
 const tradeController = require('./tradeController.js');
+const itemController = require('./itemController.js');
 
 var availableZones = [];
 
@@ -48,10 +49,12 @@ const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
     }else{
       console.log('No users in zone. Mob spawn halted.')
     }
-  },40000);
+  },120000);
 };
 
 const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=>{
+  db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
+  resourceCount++;
   setInterval(()=>{
     if(usersInZone.length>0){
       console.log('Generating Resource for Zone '+zoneId);
@@ -60,7 +63,7 @@ const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=
     }else{
       console.log('No users in zone. Resource spawn halted.')
     }
-  },30000);
+  },70000);
 };
 
 const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
@@ -100,7 +103,7 @@ const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
     }else{
       console.log('No users or mobs in zone. Mob attack halted.');
     }
-  },6000);
+  },5000);
 };
 
 const retrieveUserFromZoneUsers = (username,usersInZone)=>{
@@ -245,6 +248,11 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
 
     socket.on('collectResource',function(data){
       db.addResourceToPlayerAndEmit(data,resourcesInZone,nsp,socket);
+    });
+
+    socket.on('useItem',function(data){
+      console.log(data);
+      itemController.useItemAndEmit(socket,data);
     });
 
     //LOCAL

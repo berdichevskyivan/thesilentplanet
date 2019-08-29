@@ -121,6 +121,7 @@ p {
 
 .OtherZones ul li {
   justify-content: center !important;
+  padding: 3px;
 }
 
 .CurrentPlayers ul li:hover {

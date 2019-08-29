@@ -12,10 +12,13 @@ import Items from './Items';
 import Resources from './Resources';
 import UserProfile from './UserProfile';
 import TradeWithNpcModal from './TradeWithNpcModal';
+import UserContextMenu from './UserContextMenu';
+import ItemContextMenu from './ItemContextMenu';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import connectedPath from './resources/images/ui/connected.png';
 import travellingPath from './resources/images/ui/loadingscreen.gif';
+import { MenuProvider } from 'react-contexify';
 
 class App extends React.Component {
 
@@ -53,7 +56,9 @@ class App extends React.Component {
       showTradeWithNpcModal:false,
       itemsBeingTraded:[],
       tradeSent:false,
-      tradeResponse:''
+      tradeResponse:'',
+      userInContextMenu:'',
+      itemInContextMenu:{}
     }
     this.socket = null;
     this.zoneSocket = null;
@@ -285,6 +290,30 @@ class App extends React.Component {
 
               }
 
+            });
+
+            zoneSocket.on('deathSignal',(data)=>{
+              console.log('death');
+              this.socket.disconnect();
+              this.zoneSocket.disconnect();
+              let newPlayerInfo = this.state.playerInfo;
+              newPlayerInfo.stability = 0;
+              this.setState({
+                playerInfo:newPlayerInfo
+              });
+              setTimeout(()=>{
+                this.setState({
+                  showLoading:true,
+                  localChatMessages:[],
+                  usersInZone:[],
+                  npcInZone:[],
+                  resourcesInZone:[],
+                  consoleMessages:[],
+                  globalChatMessages:[]
+                },()=>{
+                  this.callThisFunction();
+                })
+              },5000);
             });
 
           });
@@ -530,13 +559,32 @@ class App extends React.Component {
     });
   }
 
+  handleShowUserContextMenu = (e)=>{
+    console.log('showing user context');
+  }
+
+  handleHideUserContextMenu = (e)=>{
+    console.log('hiding user context');
+  }
+
+  setItemInContextMenu = (item)=>{
+    this.setState({
+      itemInContextMenu:item
+    });
+  }
+
+  useItem = (item)=>{
+    console.log(item);
+    this.zoneSocket.emit('useItem',item);
+  }
+
   render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
     const rowOrColumnForResource = this.state.resourcesInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
 
     return (
-      <div className="App">
+      <div className="App" onContextMenu={(e)=>{}}>
         <TradeWithNpcModal showTradeWithNpcModal={this.state.showTradeWithNpcModal} handleCloseTradeWithNpcModal={this.handleCloseTradeWithNpcModal} itemsBeingTraded={this.state.itemsBeingTraded}
           handleChangeAmountWanted={this.handleChangeAmountWanted} buyTradedItems={this.buyTradedItems} tradeSent={this.state.tradeSent} tradeResponse={this.state.tradeResponse}/>
         <div className="Travelling" style={this.state.showLoading?{'display':'flex'}:{'display':'none'}}>
@@ -556,7 +604,9 @@ class App extends React.Component {
               <div className="row CurrentPlayers">
                 <ul>
                   { this.state.usersInZone.map((user)=>{
-                    return <li><img src={connectedPath} />{user.username}</li>
+                    return <MenuProvider id="menu_id" style={{'display':'contents'} } onContextMenu={()=>{this.setState({userInContextMenu:user.username})}} >
+                      <li><img src={connectedPath} />{user.username}</li>
+                    </MenuProvider>
                   }) }
                 </ul>
               </div>
@@ -640,11 +690,13 @@ class App extends React.Component {
                 </div>
               </div>
               <Equipment show={this.state.showEquipment} playerEquipment={this.state.playerEquipment} />
-              <Items show={this.state.showItems} playerItems={this.state.playerItems} />
+              <Items show={this.state.showItems} playerItems={this.state.playerItems} setItemInContextMenu={this.setItemInContextMenu}/>
               <Resources show={this.state.showResources} playerResources={this.state.playerResources} />
             </div>
           </div>
         </div>
+        <UserContextMenu username={this.state.userInContextMenu} handleShowUserContextMenu={this.handleShowUserContextMenu} handleHideUserContextMenu={this.handleHideUserContextMenu} />
+        <ItemContextMenu item={this.state.itemInContextMenu} useItem={this.useItem}/>
       </div>
     );
   }

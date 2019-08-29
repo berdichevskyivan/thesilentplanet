@@ -1,0 +1,18 @@
+.ItemContextMenu {
+  background: black !important;
+  z-index: 99999;
+  border: 1px solid lime;
+  box-shadow: 0 10px 20px rgba(0,0,0,.3);
+}
+
+.ItemContextMenu p {
+  color: lime;
+  font-family: monospace;
+  text-align: center;
+  border-bottom: 1px solid lime;
+  padding-bottom: 5px;
+  padding-right: 5px;
+  padding-left: 5px;
+  font-weight: bold;
+  font-size: 15px;
+}
