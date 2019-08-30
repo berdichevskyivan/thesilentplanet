@@ -73,7 +73,7 @@ const getZoneInformationAndEmit = (socket,zone_id)=>{
 }
 
 const getOtherZonesAndEmit = (socket,zone_id)=>{
-  pool.query('select * from zones where zone_id!=$1',[zone_id],(err,res)=>{
+  pool.query('select * from zones order by zone_id asc',(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -230,41 +230,102 @@ const deleteResourceFromListAndEmit = (data,resourcesInZone,nsp,socket)=>{
 }
 
 const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
-  pool.query('update players set stability = stability - $1 where player_name=$2',[mobInZone.attack_power,user.username],(err,res)=>{
+
+  return (async ()=>{
+    let playerDied = false;
+    const stabilityUpdate = await pool.query('update players set stability = stability - $1 where player_name=$2',[mobInZone.attack_power,user.username]);
+    const stabilityCheck = await pool.query('select player_id,player_name,player_password,stability,currency from players where player_name=$1',[user.username]);
+    if(stabilityCheck.rows[0].stability < 1){
+      console.log('Player died');
+      nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
+      nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+      nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' looted '+stabilityCheck.rows[0].currency+' currency from you and all your items.');
+      nsp.emit('localChatMessage',mobInZone.target_name+' has looted '+stabilityCheck.rows[0].currency+' currency from '+user.username+' and all its items.');
+      nsp.to(user.socketId).emit('consoleMessage','You died.');
+      nsp.to(user.socketId).emit('consoleMessage','Reuploading consciousness into new host...');
+      nsp.emit('localChatMessage',user.username+' died.');
+      nsp.to(user.socketId).emit('deathSignal',{});
+      const npcLootsPlayer = await pool.query('select a.amount,b.item_name,b.item_id,b.item_text,b.item_cost from player_items a, items b where a.item_id = b.item_id and a.player_id = $1 and a.amount!=0;',[stabilityCheck.rows[0].player_id]);
+      if(npcLootsPlayer.rows.length > 0){
+        console.log('NPC will loot now');
+        for(var i = 0 ; i < npcLootsPlayer.rows.length ; i++){
+          mobInZone.npc_items.push(npcLootsPlayer.rows[i]);
+          console.log('looting this item:');
+          console.log(npcLootsPlayer.rows[i]);
+        }
+        mobInZone.current_currency = mobInZone.current_currency + stabilityCheck.rows[0].currency;
+        console.log('im here');
+        console.log(mobInZone);
+      }else{
+        console.log('NPC didnt loot anything...')
+      }
+      const deletePlayerFromDatabase = await pool.query('delete from players where player_id='+stabilityCheck.rows[0].player_id);
+      const insertNewPlayer = await pool.query('insert into players(player_id,player_name,player_password) VALUES($1,$2,$3);',[stabilityCheck.rows[0].player_id,stabilityCheck.rows[0].player_name,stabilityCheck.rows[0].player_password]);
+      const deletePlayerItems = await pool.query('delete from player_items where player_id='+stabilityCheck.rows[0].player_id);
+      const deletePlayerResources = await pool.query('delete from player_resources where player_id='+stabilityCheck.rows[0].player_id);
+      playerDied = true;
+    }else{
+      console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+      nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
+      nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+      getPlayerInfoAndEmitToNspSocket(nsp,user);
+    }
+    return playerDied;
+  })().catch(err=>console.log(err));
+
+}
+
+const getPlayerItemsAndEmitToNspSocket = (nsp,user)=>{
+  pool.query('select b.*,a.amount from player_items a, items b,players c where a.item_id = b.item_id and a.player_id = c.player_id and c.player_name=$1 and a.amount > 0 order by a.amount desc;',[user.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
-      (async ()=>{
-        const stabilityCheck = await pool.query('select player_id,player_name,player_password,stability from players where player_name=$1',[user.username]);
-        if(stabilityCheck.rows[0].stability < 1){
-          console.log('Player died');
-          nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
-          nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
-          nsp.to(user.socketId).emit('consoleMessage','You died.');
-          nsp.to(user.socketId).emit('consoleMessage','Reuploading consciousness into new host...');
-          nsp.emit('localChatMessage',user.username+' died.');
-          nsp.to(user.socketId).emit('deathSignal',{});
-          const deletePlayerFromDatabase = await pool.query('delete from players where player_id='+stabilityCheck.rows[0].player_id);
-          const insertNewPlayer = await pool.query('insert into players(player_name,player_password) VALUES($1,$2);',[stabilityCheck.rows[0].player_name,stabilityCheck.rows[0].player_password]);
-        }else{
-          console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
-          getPlayerInfoAndEmitToNspSocket(nsp,user,mobInZone);
-        }
-      })().catch(err=>console.log(err));
+      nsp.to(user.socketId).emit('getPlayerItems',res.rows);
     }
   });
 }
 
-const getPlayerInfoAndEmitToNspSocket = (nsp,user,mobInZone)=>{
+const getPlayerInfoAndEmitToNspSocket = (nsp,user)=>{
   pool.query('select a.*,b.zone_id,b.zone_namespace,b.zone_video_url from players a, zones b where a.current_zone_id=b.zone_id and player_name = $1',[user.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
-      nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
-      nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
       nsp.to(user.socketId).emit('getPlayerInformation',res.rows[0]);
     }
   });
+}
+
+const lootNpcAndEmit = (npc,socket)=>{
+  (async ()=>{
+    let zeroCount = 0;
+    let responseMessage = 'You looted ';
+    for(var i = 0 ; i < npc.npc_items.length ; i++){
+      if(npc.npc_items[i].amount>0){
+        console.log(npc.npc_items[i].item_name+' will try to be updated or inserted');
+        const updateResult = await pool.query('update player_items set amount=amount+$1 where player_id in (select player_id from players where player_name=$2) and item_id=$3;',[npc.npc_items[i].amount,socket.username,npc.npc_items[i].item_id]);
+        if(updateResult.rowCount > 0){
+          console.log(socket.username+' items were updated.');
+          console.log(npc.npc_items[i].item_name+' was updated');
+          responseMessage += (npc.npc_items[i].amount + ' ' + npc.npc_items[i].item_name + ', ');
+        }else{
+          console.log(socket.username+' items were not updated. will insert them instead');
+          const insertResult = await pool.query('insert into player_items select player_id,$1,$2 from players where player_name = $3;',[npc.npc_items[i].item_id,npc.npc_items[i].amount,socket.username]);
+          console.log(npc.npc_items[i].item_name+' was inserted');
+          responseMessage += (npc.npc_items[i].amount + ' ' + npc.npc_items[i].item_name + ', ');
+        }
+      }else{
+        zeroCount++;
+      }
+    }
+    if(zeroCount===npc.npc_items.length){
+      console.log('no items were looted');
+      socket.emit('consoleMessage',npc.target_name+' dropped no loot.');
+    }else{
+      responseMessage = responseMessage.slice(0, -2) + '.';
+      getPlayerItemsAndEmit(socket);
+      socket.emit('consoleMessage',responseMessage);
+    }
+  })().catch(err=>console.log(err));
 }
 
 module.exports = {
@@ -283,5 +344,6 @@ module.exports = {
   addResourceToPlayerAndEmit:addResourceToPlayerAndEmit,
   stealFromNpcAndEmit:stealFromNpcAndEmit,
   getNpcDialogueAndEmit:getNpcDialogueAndEmit,
-  npcAttackUserAndEmit:npcAttackUserAndEmit
+  npcAttackUserAndEmit:npcAttackUserAndEmit,
+  lootNpcAndEmit:lootNpcAndEmit
 }

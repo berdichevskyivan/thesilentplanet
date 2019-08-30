@@ -41,6 +41,8 @@ const initializeZones = (io)=>{
 const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
   db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
   mobCount++;
+  db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
+  mobCount++;
   setInterval(()=>{
     if(usersInZone.length>0){
       console.log('Generating Mob for Zone '+zoneId);
@@ -49,7 +51,7 @@ const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
     }else{
       console.log('No users in zone. Mob spawn halted.')
     }
-  },120000);
+  },220000);
 };
 
 const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=>{
@@ -69,37 +71,46 @@ const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=
 const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
   setInterval(()=>{
     if(usersInZone.length>0 && mobsInZone.length>0){
-      for(let i = 0; i < mobsInZone.length;i++){
+        (async ()=>{
+          for(let i = 0; i < mobsInZone.length;i++){
+            let mobInZone = mobsInZone[i];
+            let attackingUser = mobInZone.attacking_user;
 
-        let mobInZone = mobsInZone[i];
-        let attackingUser = mobInZone.attacking_user;
-
-        if(typeof attackingUser === 'undefined'){
-          console.log('Noone is attacking '+mobInZone.target_name+'. Choosing a random target.');
-          let user = retrieveRandomUserFromZoneUsers(usersInZone);
-          console.log('Will attack '+user.username);
-          mobInZone.attacking_user = user.username;
-          db.npcAttackUserAndEmit(nsp,user,mobInZone);
-        }else{
-          console.log(attackingUser+' is attacking '+mobInZone.target_name+'. Attacking it in return.');
-          console.log('retrieving user from json array...');
-          let user = retrieveUserFromZoneUsers(attackingUser,usersInZone);
-          if(user){
-            console.log(user);
-            db.npcAttackUserAndEmit(nsp,user,mobInZone);
-          }else{
-            console.log('user is no longer connected');
-            console.log('retrieving new random user');
-            //Choose a new target
-            user = retrieveRandomUserFromZoneUsers(usersInZone);
-            console.log('Will attack '+user.username);
-            mobInZone.attacking_user = user.username;
-            db.npcAttackUserAndEmit(nsp,user,mobInZone);
+            if(typeof attackingUser === 'undefined'){
+              console.log('Noone is attacking '+mobInZone.target_name+'. Choosing a random target.');
+              let user = retrieveRandomUserFromZoneUsers(usersInZone);
+              console.log('Will attack '+user.username);
+              mobInZone.attacking_user = user.username;
+              let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone);
+              console.log('this is attackResult');
+              console.log(attackResult);
+              if(attackResult) break;
+            }else{
+              console.log(attackingUser+' is attacking '+mobInZone.target_name+'. Attacking it in return.');
+              console.log('retrieving user from json array...');
+              let user = retrieveUserFromZoneUsers(attackingUser,usersInZone);
+              if(user){
+                console.log(user);
+                let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone);
+                console.log('this is attackResult');
+                console.log(attackResult);
+                if(attackResult) break;
+              }else{
+                console.log('user is no longer connected');
+                console.log('retrieving new random user');
+                //Choose a new target
+                user = retrieveRandomUserFromZoneUsers(usersInZone);
+                console.log('Will attack '+user.username);
+                mobInZone.attacking_user = user.username;
+                let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone);
+                console.log('this is attackResult');
+                console.log(attackResult);
+                if(attackResult) break;
+              }
+            }
           }
-        }
-
-      }
-      nsp.emit('generateZoneNpc',mobsInZone);
+          nsp.emit('generateZoneNpc',mobsInZone);
+        })().catch(err=>console.log(err));
     }else{
       console.log('No users or mobs in zone. Mob attack halted.');
     }
@@ -162,6 +173,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
         socket.emit('consoleMessage','You attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
         nsp.emit('localChatMessage',data.attackingUser+' has attacked '+data.attackedTarget+' for '+data.spDamage+' SP points.');
         if(mobsInZone[attackedNpcIndex].current_stability<=0){
+          db.lootNpcAndEmit(mobsInZone[attackedNpcIndex],socket);
           mobsInZone.splice(attackedNpcIndex,1);
           socket.emit('consoleMessage', data.attackedTarget+' dies.');
           nsp.emit('localChatMessage',data.attackingUser+' deals a killing blow! '+data.attackedTarget+' dies.');

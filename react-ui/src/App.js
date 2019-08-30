@@ -14,6 +14,7 @@ import UserProfile from './UserProfile';
 import TradeWithNpcModal from './TradeWithNpcModal';
 import UserContextMenu from './UserContextMenu';
 import ItemContextMenu from './ItemContextMenu';
+import HtmlTooltip from './HtmlTooltip';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
 import connectedPath from './resources/images/ui/connected.png';
@@ -313,7 +314,7 @@ class App extends React.Component {
                 },()=>{
                   this.callThisFunction();
                 })
-              },5000);
+              },7000);
             });
 
           });
@@ -628,13 +629,34 @@ class App extends React.Component {
             <div className="col-md-2 col-sm-2 worldcolumn hideonmobile">
               <div className="row WorldViewTabs">
                 <div className="col-md-12 col-sm-12 worldviewtab">
-                  <p>Other Zones</p>
+                  <p>Available Zones</p>
                 </div>
               </div>
               <div className="row OtherZones">
                 <ul>
                   { this.state.otherZones.map((zone)=>{
-                    return <li value={zone.zone_id} onClick={this.handleChangeZone}>{zone.zone_name}</li>
+                    if(zone.zone_id===this.state.playerInfo.current_zone_id){
+                      return (<HtmlTooltip
+                                 title={
+                                   <React.Fragment>
+                                     {zone.zone_text}
+                                   </React.Fragment>
+                                 }
+                                 placement="left">
+                                 <li style={{'background':'#00ff00bf','color':'white'}} value={zone.zone_id} onClick={this.handleChangeZone}>{zone.zone_name}</li>
+                               </HtmlTooltip> );
+
+                    }else{
+                      return (<HtmlTooltip
+                                 title={
+                                   <React.Fragment>
+                                     {zone.zone_text}
+                                   </React.Fragment>
+                                 }
+                                 placement="left">
+                                 <li value={zone.zone_id} onClick={this.handleChangeZone}>{zone.zone_name}</li>
+                               </HtmlTooltip> );
+                    }
                   }) }
                 </ul>
               </div>

@@ -102,6 +102,11 @@ p {
   overflow: hidden;
 }
 
+.OtherZones ul {
+  margin: 0 !important;
+  padding-top: 0 !important;
+}
+
 .CurrentPlayers ul li, .OtherZones ul li {
   width: 100%;
   text-align: center;
