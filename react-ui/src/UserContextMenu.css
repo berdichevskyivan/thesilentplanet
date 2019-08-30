@@ -3,6 +3,7 @@
   z-index: 99999;
   border: 1px solid lime;
   box-shadow: 0 10px 20px rgba(0,0,0,.3);
+  padding-bottom: 0 !important;
 }
 
 .UserContextMenu p {

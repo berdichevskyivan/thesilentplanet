@@ -26,12 +26,11 @@ const getPlayerInfoAndEmit = (socket)=>{
   });
 }
 
-var sqlForPlayerEquipment = 'select es.equipment_slot_id,'
-+'es.equipment_slot_name,items.item_id,items.item_name,items.item_text,items.item_effect_type,items.item_effect_modified_stat,items.item_effect_impact'
-+' from equipment_slots es left outer join items on es.equipment_slot_id=items.equipment_slot_id and items.item_id in'
-+' (select item_id from player_equipment pe, players pl where pe.player_id=pl.player_id and pl.player_name=$1);'
-
 const getPlayerEquipmentAndEmit = (socket)=>{
+  let sqlForPlayerEquipment = 'select es.equipment_slot_id,'
+  +'es.equipment_slot_name,items.item_id,items.item_name,items.item_text,items.item_effect_type,items.item_effect_modified_stat,items.item_effect_impact'
+  +' from equipment_slots es left outer join items on es.equipment_slot_id=items.equipment_slot_id and items.item_id in'
+  +' (select item_id from player_equipment pe, players pl where pe.player_id=pl.player_id and pl.player_name=$1);'
   pool.query(sqlForPlayerEquipment,[socket.username],(err,res)=>{
     if(err){
       console.log(err);
@@ -263,6 +262,7 @@ const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
       const insertNewPlayer = await pool.query('insert into players(player_id,player_name,player_password) VALUES($1,$2,$3);',[stabilityCheck.rows[0].player_id,stabilityCheck.rows[0].player_name,stabilityCheck.rows[0].player_password]);
       const deletePlayerItems = await pool.query('delete from player_items where player_id='+stabilityCheck.rows[0].player_id);
       const deletePlayerResources = await pool.query('delete from player_resources where player_id='+stabilityCheck.rows[0].player_id);
+      const deletePlayerEquipment = await pool.query('delete from player_equipment where player_id='+stabilityCheck.rows[0].player_id);
       playerDied = true;
     }else{
       console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');

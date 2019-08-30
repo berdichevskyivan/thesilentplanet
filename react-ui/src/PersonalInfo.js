@@ -26,7 +26,7 @@ const PersonalInfo = (props)=>{
         </div>
         <div className="PlayerStatCell">
           <p>Stability</p>
-          <p className="StatValue">{player.stability}</p>
+          <p className="StatValue">{player.stability}/{player.max_stability}</p>
         </div>
         <div className="PlayerStatCell">
           <p>Temperature</p>
@@ -55,6 +55,10 @@ const PersonalInfo = (props)=>{
         <div className="PlayerStatCell">
           <p>Sensors</p>
           <p className="StatValue">{player.sensors}</p>
+        </div>
+        <div className="PlayerStatCell">
+          <p>Attack Power</p>
+          <p className="StatValue">{player.attack_power}</p>
         </div>
       </div>
     </div>

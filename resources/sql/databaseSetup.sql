@@ -4,6 +4,7 @@ CREATE TABLE players (
   player_password VARCHAR(40),
   currency SMALLINT DEFAULT 0,
   stability SMALLINT DEFAULT 100,
+  max_stability SMALLINT DEFAULT 100,
   average_temperature SMALLINT DEFAULT 20,
   alignment_id SMALLINT DEFAULT 1,
   engineering SMALLINT DEFAULT 0,
@@ -11,6 +12,7 @@ CREATE TABLE players (
   intrusion SMALLINT DEFAULT 0,
   optics SMALLINT DEFAULT 0,
   sensors SMALLINT DEFAULT 0,
+  attack_power SMALLINT DEFAULT 1,
   current_zone_id SMALLINT DEFAULT 1,
   PRIMARY KEY (player_name)
 );
@@ -29,7 +31,8 @@ CREATE TABLE player_items (
 
 CREATE TABLE player_equipment (
   player_id SMALLINT,
-  item_id SMALLINT
+  item_id SMALLINT,
+  equipment_slot_id SMALLINT
 );
 
 CREATE TABLE zones (
@@ -95,15 +98,15 @@ CREATE TABLE items (
   item_text TEXT,
   can_equip BOOLEAN,
   equipment_slot_id SMALLINT,
-  item_effect_type VARCHAR(30),
-  item_effect_modified_stat VARCHAR(30),
-  item_effect_impact SMALLINT,
+  item_effect_type TEXT,
+  item_effect_modified_stat TEXT,
+  item_effect_impact TEXT,
   item_cost SMALLINT
 );
 
 CREATE TABLE equipment_slots (
   equipment_slot_id SMALLINT,
-  equipment_slot_name VARCHAR(15)
+  equipment_slot_name VARCHAR(35)
 );
 
 CREATE TABLE crafting (

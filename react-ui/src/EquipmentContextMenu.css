@@ -1,4 +1,4 @@
-.ItemContextMenu {
+.EquipmentContextMenu {
   background: black !important;
   z-index: 99999;
   border: 1px solid lime;
@@ -6,7 +6,7 @@
   padding-bottom: 0 !important;
 }
 
-.ItemContextMenu p {
+.EquipmentContextMenu p {
   color: lime;
   font-family: monospace;
   text-align: center;

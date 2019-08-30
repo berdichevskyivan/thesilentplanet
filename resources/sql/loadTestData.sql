@@ -10,7 +10,7 @@ INSERT INTO player_items VALUES
 (1,2,1);
 
 INSERT INTO player_equipment VALUES
-(1,1);
+(1,1,1);
 
 INSERT INTO zones VALUES
 (1,'The Overseer','Milky Way Galaxy',20,'Mothership of the Automata. It''s orbiting what''s left of Planet Earth.','Ship',0,'/theoverseer','./resources/video/forest.mp4'),
@@ -86,21 +86,22 @@ INSERT INTO resources VALUES
 (9,'Nitrate Dust','Nitrate dust used to craft extremely powerful explosives','./resources/images/resources/nitratedust.png');
 
 INSERT INTO items VALUES
-(1,'Enos Mask','A Mask carved out of the head of a Enos Demon.','yes',1,'increase','engineering',10,100),
-(2,'Basic Repair Kit','Basic Repair Kit used to repair other androids.','no',null,'increase','stability',20,100),
-(3,'Utmos, The Black Sword','A massive runed black sword. It seems to be bleeding.','yes',1,'increase','engineering',10,100),
-(4,'Libram of Fire','Libram sacred to Uruk blasksmiths. Contains the secret to their trade.','no',null,'increase','stability',20,100),
-(5,'Interdimensional Staff','Staff used for interdimensional travel. Use with caution.','yes',1,'increase','engineering',10,100),
-(6,'Gold Plated Mechatronic Feet','Advanced mechatronic feet used for increased speed and stability.','no',null,'increase','stability',20,100);
+(1,'Enos Mask','A Mask carved out of the head of a Enos Demon.','yes',8,'increase','engineering','10',100),
+(2,'Basic Repair Kit','Basic Repair Kit used to repair other androids.','no',null,'increase','stability','20',100),
+(3,'Utmos, The Black Sword','A massive runed black sword. It seems to be bleeding.','yes',1,'increase,increase','attack_power,max_stability','10,25',100),
+(4,'Libram of Fire','Libram sacred to Uruk blasksmiths. Contains the secret to their trade.','no',null,'increase','stability','20',100),
+(5,'Interdimensional Staff','Staff used for interdimensional travel. Use with caution.','yes',1,'increase','engineering','10',100),
+(6,'Gold Plated Mechatronic Feet','Advanced mechatronic feet used for increased speed and stability.','no',null,'increase','stability','20',100);
 
 INSERT INTO equipment_slots VALUES
-(1,'Head'),
-(2, 'Optics'),
-(3, 'Sensors'),
-(4, 'Chest'),
-(5, 'Legs'),
-(6, 'Hands'),
-(7, 'Back');
+(1,'Weapon System'),
+(2,'CPU Socket'),
+(3,'Storage Unit'),
+(4,'Cooling System'),
+(5,'Power Supply Unit'),
+(6,'Actuators'),
+(7,'Sensors'),
+(8,'Optics');
 
 INSERT INTO crafting VALUES
 (1,3,1),

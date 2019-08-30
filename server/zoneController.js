@@ -48,8 +48,6 @@ const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
       console.log('Generating Mob for Zone '+zoneId);
       db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
       mobCount++;
-    }else{
-      console.log('No users in zone. Mob spawn halted.')
     }
   },220000);
 };
@@ -62,8 +60,6 @@ const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=
       console.log('Generating Resource for Zone '+zoneId);
       db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
       resourceCount++;
-    }else{
-      console.log('No users in zone. Resource spawn halted.')
     }
   },70000);
 };
@@ -111,8 +107,6 @@ const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
           }
           nsp.emit('generateZoneNpc',mobsInZone);
         })().catch(err=>console.log(err));
-    }else{
-      console.log('No users or mobs in zone. Mob attack halted.');
     }
   },5000);
 };
@@ -265,6 +259,14 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
     socket.on('useItem',function(data){
       console.log(data);
       itemController.useItemAndEmit(socket,data);
+    });
+
+    socket.on('equipItem',function(data){
+      itemController.equipItemAndEmit(socket,data);
+    });
+
+    socket.on('unequipItem',function(data){
+      itemController.unequipItemAndEmit(socket,data);
     });
 
     //LOCAL

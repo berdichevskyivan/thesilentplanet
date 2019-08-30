@@ -14,6 +14,7 @@ import UserProfile from './UserProfile';
 import TradeWithNpcModal from './TradeWithNpcModal';
 import UserContextMenu from './UserContextMenu';
 import ItemContextMenu from './ItemContextMenu';
+import EquipmentContextMenu from './EquipmentContextMenu';
 import HtmlTooltip from './HtmlTooltip';
 import './App.css';
 import 'bootstrap/dist/css/bootstrap.min.css';
@@ -59,7 +60,8 @@ class App extends React.Component {
       tradeSent:false,
       tradeResponse:'',
       userInContextMenu:'',
-      itemInContextMenu:{}
+      itemInContextMenu:{},
+      equipmentInContextMenu:{}
     }
     this.socket = null;
     this.zoneSocket = null;
@@ -203,6 +205,13 @@ class App extends React.Component {
             zoneSocket.on('getPlayerItems',(data)=>{
               this.setState({
                 playerItems:data
+              });
+            });
+
+            zoneSocket.on('getPlayerEquipment',(data)=>{
+              console.log(data);
+              this.setState({
+                playerEquipment:data
               });
             });
 
@@ -437,7 +446,7 @@ class App extends React.Component {
     this.zoneSocket.emit('attackNpc',{
       attackingUser:this.state.playerInfo.player_name,
       attackedTarget:targetName,
-      spDamage:1
+      spDamage:this.state.playerInfo.attack_power
     });
   }
 
@@ -574,9 +583,34 @@ class App extends React.Component {
     });
   }
 
+  setEquipmentInContextMenu = (equipmentSlot)=>{
+    this.setState({
+      equipmentInContextMenu:equipmentSlot
+    });
+  }
+
   useItem = (item)=>{
     console.log(item);
     this.zoneSocket.emit('useItem',item);
+  }
+
+  equipItem = (item)=>{
+    let playerEquipment = this.state.playerEquipment;
+    let itemAlreadyEquipped = false;
+    for(let i = 0 ; i < playerEquipment.length ; i++){
+      if(item.item_id === playerEquipment[i].item_id){
+        itemAlreadyEquipped = true;
+      }
+    }
+    if(itemAlreadyEquipped){
+      this.socket.emit('consoleMessage','Item is already equipped.');
+    }else{
+      this.zoneSocket.emit('equipItem',item);
+    }
+  }
+
+  unequipItem = (equipment)=>{
+    this.zoneSocket.emit('unequipItem',equipment);
   }
 
   render(){
@@ -711,14 +745,15 @@ class App extends React.Component {
                   <p>Resources</p>
                 </div>
               </div>
-              <Equipment show={this.state.showEquipment} playerEquipment={this.state.playerEquipment} />
-              <Items show={this.state.showItems} playerItems={this.state.playerItems} setItemInContextMenu={this.setItemInContextMenu}/>
+              <Equipment show={this.state.showEquipment} playerEquipment={this.state.playerEquipment} setEquipmentInContextMenu={this.setEquipmentInContextMenu} />
+              <Items show={this.state.showItems} playerItems={this.state.playerItems} setItemInContextMenu={this.setItemInContextMenu} />
               <Resources show={this.state.showResources} playerResources={this.state.playerResources} />
             </div>
           </div>
         </div>
         <UserContextMenu username={this.state.userInContextMenu} handleShowUserContextMenu={this.handleShowUserContextMenu} handleHideUserContextMenu={this.handleHideUserContextMenu} />
-        <ItemContextMenu item={this.state.itemInContextMenu} useItem={this.useItem}/>
+        <ItemContextMenu item={this.state.itemInContextMenu} useItem={this.useItem} equipItem={this.equipItem}/>
+        <EquipmentContextMenu equipment={this.state.equipmentInContextMenu} unequipItem={this.unequipItem}/>
       </div>
     );
   }
