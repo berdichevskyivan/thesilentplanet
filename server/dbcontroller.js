@@ -1,12 +1,17 @@
 const { Client, Pool } = require('pg');
 
+// const pool = new Pool({
+//   user:'postgres',
+//   //password:'dgtic123',
+//   password:'rakmodar',
+//   host:'localhost',
+//   database:'thesilentplanet',
+//   port:5432
+// });
+
 const pool = new Pool({
-  user:'postgres',
-  //password:'dgtic123',
-  password:'rakmodar',
-  host:'localhost',
-  database:'thesilentplanet',
-  port:5432
+  connectionString: process.env.DATABASE_URL,
+  ssl: true
 });
 
 var genID = function guidGenerator() {
