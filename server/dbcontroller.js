@@ -1,14 +1,11 @@
 const { Client, Pool } = require('pg');
 
+// //For local dev
 // const pool = new Pool({
-//   user:'postgres',
-//   //password:'dgtic123',
-//   password:'rakmodar',
-//   host:'localhost',
-//   database:'thesilentplanet',
-//   port:5432
+//   connectionString: process.env.DATABASE_URL
 // });
 
+// For heroku
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl:true
