@@ -8,7 +8,7 @@ const paths = require('./paths');
 const fs = require('fs');
 
 //const protocol = process.env.HTTPS === 'true' ? 'https' : 'http';
-const protocol = 'https';
+const protocol = 'http';
 const host = process.env.HOST || '0.0.0.0';
 
 module.exports = function(proxy, allowedHost) {
@@ -73,10 +73,10 @@ module.exports = function(proxy, allowedHost) {
       ignored: ignoredFiles(paths.appSrc),
     },
     // Enable HTTPS if the HTTPS environment variable is set to 'true'
-    https: {
-      key: fs.readFileSync(__dirname+'/ssl/file.pem'),
-      cert: fs.readFileSync(__dirname+'/ssl/file.crt')
-    },
+    // https: {
+    //   key: fs.readFileSync(__dirname+'/ssl/file.pem'),
+    //   cert: fs.readFileSync(__dirname+'/ssl/file.crt')
+    // },
     host,
     overlay: false,
     historyApiFallback: {
