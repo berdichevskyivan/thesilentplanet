@@ -24,11 +24,10 @@ class Login extends React.Component {
   }
 
   componentWillMount(){
-    console.log();
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username!==null && userUniqueID!==null){
-      this.socket = io('ws://'+window.location.hostname+process.env.REACT_APP_WS_PORT, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://'+window.location.hostname+':5000', {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='valid'){
           this.props.history.push('/world');
@@ -38,7 +37,7 @@ class Login extends React.Component {
         }
       });
     }else{
-      this.socket = io('ws://'+window.location.hostname+process.env.REACT_APP_WS_PORT, {transports: ['websocket']});
+      this.socket = io('ws://'+window.location.hostname+':5000', {transports: ['websocket']});
     }
   }
 
