@@ -1,0 +1,44 @@
+.BlueprintModalList {
+  width: 300px;
+  margin: 0 !important;
+  list-style-type: none;
+}
+
+.BlueprintModalList li {
+  display: flex;
+  flex-flow: row;
+  margin-bottom: 10px;
+}
+
+.BlueprintModalList li:first-child {
+  font-weight: bold;
+  font-size: 15px;
+}
+
+.BlueprintModalList li p {
+  width: 50%;
+  text-align: center;
+}
+
+button#craft {
+  border: 1px solid lime;
+  outline: none !important;
+  margin-top: 20px;
+}
+
+button#craft:hover {
+  background: #00ff00b8;
+  color: white;
+}
+
+.CraftResponse {
+  border: 1px solid lime;
+  margin-top: 20px;
+  padding: 10px;
+}
+
+img#loader {
+  height: 50px;
+  width: 50px;
+  margin-top: 30px;
+}

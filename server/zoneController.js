@@ -269,6 +269,11 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
       itemController.unequipItemAndEmit(socket,data);
     });
 
+    socket.on('craftItem',(data)=>{
+      console.log(data);
+      itemController.craftItemAndEmit(socket,data);
+    });
+
     //LOCAL
     socket.on('localChatMessage', function(msg){
       console.log('Local Chat Message sent: '+msg);

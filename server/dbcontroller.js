@@ -42,7 +42,7 @@ const getPlayerEquipmentAndEmit = (socket)=>{
 
 const getPlayerResourcesAndEmit = (socket)=>{
   pool.query('select b.*,a.amount from player_resources a, resources b,players c'
-            +' where a.resource_id = b.resource_id and a.player_id = c.player_id and c.player_name=$1 order by a.amount desc;',[socket.username],(err,res)=>{
+            +' where a.resource_id = b.resource_id and a.player_id = c.player_id and c.player_name=$1 and a.amount != 0 order by a.amount desc;',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -59,6 +59,34 @@ const getPlayerItemsAndEmit = (socket)=>{
       socket.emit('getPlayerItems',res.rows);
     }
   });
+}
+
+const getPlayerBlueprintsAndEmit = (socket)=>{
+  (async ()=>{
+    //Initialize response data
+    let playerBlueprintsArray = [];
+    //First get the blueprints
+    let playerBlueprints = await pool.query('select * from player_blueprints where player_id in (select player_id from players where player_name=$1);',[socket.username]);
+    //Check if there are any
+    if(playerBlueprints.rowCount > 0){
+      playerBlueprintsArray = playerBlueprints.rows;
+      //Loop and get the resources needed for each blueprint
+      for(let i = 0 ; i < playerBlueprintsArray.length ; i++){
+        let sqlQuery = 'select a.blueprint_id,a.item_id,b.item_name,a.resource_id,c.resource_name,a.amount '
+                        +'from blueprints a, items b, resources c '
+                        +'where a.item_id = b.item_id '
+                        +'and a.resource_id = c.resource_id '
+                        +'and a.blueprint_id = $1';
+        let getBlueprintResources = await pool.query(sqlQuery,[playerBlueprintsArray[i].blueprint_id]);
+        playerBlueprintsArray[i].blueprint_resources = getBlueprintResources.rows;
+      }
+      //Now we can send back the blueprints
+      socket.emit('getPlayerBlueprints',playerBlueprintsArray);
+    }else{
+      //No blueprints. We send empty array
+      socket.emit('getPlayerBlueprints',playerBlueprintsArray);
+    }
+  })().catch(err=>console.log(err));
 }
 
 const getZoneInformationAndEmit = (socket,zone_id)=>{
@@ -263,6 +291,7 @@ const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
       const deletePlayerItems = await pool.query('delete from player_items where player_id='+stabilityCheck.rows[0].player_id);
       const deletePlayerResources = await pool.query('delete from player_resources where player_id='+stabilityCheck.rows[0].player_id);
       const deletePlayerEquipment = await pool.query('delete from player_equipment where player_id='+stabilityCheck.rows[0].player_id);
+      const deletePlayerBlueprints = await pool.query('delete from player_blueprints where player_id='+stabilityCheck.rows[0].player_id);
       playerDied = true;
     }else{
       console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
@@ -334,6 +363,7 @@ module.exports = {
   getPlayerEquipmentAndEmit:getPlayerEquipmentAndEmit,
   getPlayerResourcesAndEmit:getPlayerResourcesAndEmit,
   getPlayerItemsAndEmit:getPlayerItemsAndEmit,
+  getPlayerBlueprintsAndEmit:getPlayerBlueprintsAndEmit,
   getZoneInformationAndEmit:getZoneInformationAndEmit,
   getOtherZonesAndEmit:getOtherZonesAndEmit,
   changeZoneAndEmit:changeZoneAndEmit,

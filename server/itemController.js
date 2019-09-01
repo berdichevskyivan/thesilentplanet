@@ -7,7 +7,6 @@ const useItemAndEmit = (socket,item)=>{
     let userStability = checkUserStats.rows[0].stability;
     let userMaxStability = checkUserStats.rows[0].max_stability;
     let amountIncreased = parseInt(item.item_effect_impact);
-    console.log('this is amountIncreased->'+amountIncreased);
     //Do a check if the item increases stability
     if(item.item_effect_modified_stat==='stability' && item.item_effect_type==='increase'){
       if(userStability === userMaxStability) socket.emit('consoleMessage','You have max SP points. You can\'t use this item.');
@@ -26,15 +25,33 @@ const useItemAndEmit = (socket,item)=>{
         socket.emit('consoleMessage','You used 1 '+item.item_name+'. Your '+item.item_effect_modified_stat+' has '+item.item_effect_type+'d by '+amountIncreased+'.');
       }
     }else{
-      let sqlQuery = 'update players set '+item.item_effect_modified_stat+'='+item.item_effect_modified_stat+(item.item_effect_type==='increase'?'+':'-')+amountIncreased+' where player_name=\''+socket.username+'\';';
-      const result = await db.pool.query(sqlQuery);
-      const updateItemsResult = await db.pool.query('update player_items set amount=amount-1 where item_id='+item.item_id+' and player_id in (select player_id from players where player_name=\''+socket.username+'\');');
-      db.getPlayerItemsAndEmit(socket);
-      db.getPlayerInfoAndEmit(socket);
-      socket.emit('consoleMessage','You used 1 '+item.item_name+'. Your '+item.item_effect_modified_stat+' has '+item.item_effect_type+'d by '+amountIncreased+'.');
+      if(item.item_effect_type==='blueprint'){
+        learnBlueprintAndEmit(socket,item);
+      }else{
+        console.log('this was not executed... RIGHT!??');
+        let sqlQuery = 'update players set '+item.item_effect_modified_stat+'='+item.item_effect_modified_stat+(item.item_effect_type==='increase'?'+':'-')+amountIncreased+' where player_name=\''+socket.username+'\';';
+        const result = await db.pool.query(sqlQuery);
+        const updateItemsResult = await db.pool.query('update player_items set amount=amount-1 where item_id='+item.item_id+' and player_id in (select player_id from players where player_name=\''+socket.username+'\');');
+        db.getPlayerItemsAndEmit(socket);
+        db.getPlayerInfoAndEmit(socket);
+        socket.emit('consoleMessage','You used 1 '+item.item_name+'. Your '+item.item_effect_modified_stat+' has '+item.item_effect_type+'d by '+amountIncreased+'.');
+      }
     }
 
   })().catch(err=>console.log(err));
+}
+
+const learnBlueprintAndEmit = (socket,item)=>{
+
+  (async ()=>{
+    console.log('learning blueprint');
+    let insertBlueprint = await db.pool.query('insert into player_blueprints select player_id,$1,$2 from players where player_name=$3',[item.item_id,item.item_name,socket.username]);
+    let deleteBlueprint = await db.pool.query('update player_items set amount=amount-1 where item_id='+item.item_id+' and player_id in (select player_id from players where player_name=\''+socket.username+'\');');
+    db.getPlayerItemsAndEmit(socket);
+    db.getPlayerBlueprintsAndEmit(socket);
+    socket.emit('consoleMessage','You have downloaded '+item.item_name+' into your system.');
+  })().catch(err=>console.log(err));
+
 }
 
 const equipItemAndEmit = (socket,item)=>{
@@ -111,8 +128,45 @@ const unequipItemAndEmit = (socket,item)=>{
   })().catch(err=>console.log(err));
 }
 
+const craftItemAndEmit = (socket,data)=>{
+  (async ()=>{
+    let playerId = data.playerId;
+    let itemBeingCrafted = data.itemBeingCrafted;
+    // First, reduce amount of resources of player
+    for(let i = 0 ; i < itemBeingCrafted.length ; i++){
+      let deductFromUserResources = await db.pool.query('update player_resources set amount=amount-$1 where resource_id=$2 and player_id=$3',[itemBeingCrafted[i].amount,itemBeingCrafted[i].resource_id,playerId]);
+      //Already reduce the amount_in_inventory in response JSON
+      itemBeingCrafted[i].amount_in_inventory = itemBeingCrafted[i].amount_in_inventory - itemBeingCrafted[i].amount;
+    }
+    //Now add the item to Users items. First need to check if it exists by doing an update and if it doesnt exist , do an Insert
+    let updatePlayerItems = await db.pool.query('update player_items set amount=amount+1 where item_id=$1 and player_id=$2',[itemBeingCrafted[0].item_id,playerId]);
+    if(updatePlayerItems.rowCount < 1){
+      //then insert
+      let insertPlayerItems = await db.pool.query('insert into player_items VALUES($1,$2,$3)',[playerId,itemBeingCrafted[0].item_id,1]);
+      // now we're done here, send back the itemBeingCrafted and a responseMessage
+      socket.emit('craftItem',{
+        responseMessage:'Item crafted successfully',
+        itemBeingCrafted:itemBeingCrafted
+      });
+      db.getPlayerItemsAndEmit(socket);
+      db.getPlayerResourcesAndEmit(socket);
+      socket.emit('consoleMessage','1 '+itemBeingCrafted[0].item_name+' was added to your inventory.');
+    }else{
+      //process done here, send back the itemBeingCrafted and a responseMessage
+      socket.emit('craftItem',{
+        responseMessage:'Item crafted successfully',
+        itemBeingCrafted:itemBeingCrafted
+      });
+      db.getPlayerItemsAndEmit(socket);
+      db.getPlayerResourcesAndEmit(socket);
+      socket.emit('consoleMessage','1 '+itemBeingCrafted[0].item_name+' was added to your inventory.');
+    }
+  })().catch(err=>console.log(err));
+}
+
 module.exports = {
   useItemAndEmit:useItemAndEmit,
   equipItemAndEmit:equipItemAndEmit,
-  unequipItemAndEmit:unequipItemAndEmit
+  unequipItemAndEmit:unequipItemAndEmit,
+  craftItemAndEmit:craftItemAndEmit
 }

@@ -20,22 +20,23 @@ const Equipment = (props)=>{
      <ul>
       { playerEquipment.map((equipmentSlot)=>{
         return (
-        <MenuProvider id="equipment_menu_id" style={{'display':'contents'} } onContextMenu={()=>{props.setEquipmentInContextMenu(equipmentSlot)}} >
+
         <li>
           <p id="slot">{equipmentSlot.equipment_slot_name}</p>
           {equipmentSlot.item_name===null?<p id="item" className="emptyitem">Empty</p>:
+          <MenuProvider id="equipment_menu_id" style={{'display':'contents'} } onContextMenu={()=>{props.setEquipmentInContextMenu(equipmentSlot)}} >
           <HtmlTooltip
            title={
              <React.Fragment>
                {equipmentSlot.item_text}
              </React.Fragment>
            }
-           placement="top"
-         >
+           placement="top">
           <p id="item">{equipmentSlot.item_name}</p>
-         </HtmlTooltip>}
+         </HtmlTooltip>
+         </MenuProvider>}
         </li>
-        </MenuProvider> );
+         );
       }) }
      </ul>
     </div>

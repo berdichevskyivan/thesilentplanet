@@ -60,6 +60,7 @@ if (!isDev && cluster.isMaster) {
           db.getPlayerEquipmentAndEmit(socket);
           db.getPlayerResourcesAndEmit(socket);
           db.getPlayerItemsAndEmit(socket);
+          db.getPlayerBlueprintsAndEmit(socket);
         });
         //SENDER
         socket.on('consoleMessage', function(msg){

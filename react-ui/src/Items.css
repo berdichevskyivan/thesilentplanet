@@ -6,7 +6,8 @@
   height: 100%;
   width: 100%;
   list-style: none;
-  padding-top: 15px;
+  padding-top: 10px;
+  padding-bottom: 10px;
   padding-left: 20px;
   padding-right: 20px;
   font-family: monospace;
@@ -28,7 +29,8 @@
 }
 
 .Items ul li p#itemName {
-  width: 25%;
+  width: 40%;
   text-align: center;
   cursor:pointer;
+  margin-left: 10px !important;
 }

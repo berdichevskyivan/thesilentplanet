@@ -71,6 +71,7 @@ INSERT INTO npc_items VALUES
 (2,2,1),
 (3,3,2),
 (4,4,1),
+(4,7,1),
 (5,5,2),
 (6,6,1);
 
@@ -91,7 +92,8 @@ INSERT INTO items VALUES
 (3,'Utmos, The Black Sword','A massive runed black sword. It seems to be bleeding.','yes',1,'increase,increase','attack_power,max_stability','10,25',100),
 (4,'Libram of Fire','Libram sacred to Uruk blasksmiths. Contains the secret to their trade.','no',null,'increase','stability','20',100),
 (5,'Interdimensional Staff','Staff used for interdimensional travel. Use with caution.','yes',1,'increase','engineering','10',100),
-(6,'Gold Plated Mechatronic Feet','Advanced mechatronic feet used for increased speed and stability.','no',null,'increase','stability','20',100);
+(6,'Gold Plated Mechatronic Feet','Advanced mechatronic feet used for increased speed and stability.','no',null,'increase','stability','20',100),
+(7,'Blueprint: Basic Repair Kit','Used to learn how to craft Basic Repair Kits','no',null,'blueprint',null,null,300);
 
 INSERT INTO equipment_slots VALUES
 (1,'Weapon System'),
@@ -103,9 +105,9 @@ INSERT INTO equipment_slots VALUES
 (7,'Sensors'),
 (8,'Optics');
 
-INSERT INTO crafting VALUES
-(1,3,1),
-(1,4,1);
+INSERT INTO blueprints VALUES
+(7,2,1,1),
+(7,2,9,2);
 
 INSERT INTO alignments VALUES
 (1,'Neutral'),

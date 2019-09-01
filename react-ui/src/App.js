@@ -10,8 +10,10 @@ import GlobalChat from './GlobalChat';
 import Equipment from './Equipment';
 import Items from './Items';
 import Resources from './Resources';
+import Crafting from './Crafting';
 import UserProfile from './UserProfile';
 import TradeWithNpcModal from './TradeWithNpcModal';
+import BlueprintModal from './BlueprintModal';
 import UserContextMenu from './UserContextMenu';
 import ItemContextMenu from './ItemContextMenu';
 import EquipmentContextMenu from './EquipmentContextMenu';
@@ -35,6 +37,7 @@ class App extends React.Component {
       playerEquipment:[],
       playerResources:[],
       playerItems:[],
+      playerBlueprints:[],
       usersInZone:[],
       zoneInfo:null,
       consoleInputMessage:'',
@@ -54,11 +57,16 @@ class App extends React.Component {
       showEquipment:true,
       showItems:false,
       showResources:false,
+      showCrafting:false,
       showLoading:false,
       showTradeWithNpcModal:false,
+      showBlueprintModal:false,
       itemsBeingTraded:[],
+      itemBeingCrafted:[],
       tradeSent:false,
+      craftSent:false,
       tradeResponse:'',
+      craftResponse:'',
       userInContextMenu:'',
       itemInContextMenu:{},
       equipmentInContextMenu:{}
@@ -208,6 +216,12 @@ class App extends React.Component {
               });
             });
 
+            zoneSocket.on('getPlayerBlueprints',(data)=>{
+              this.setState({
+                playerBlueprints:data
+              });
+            });
+
             zoneSocket.on('getPlayerEquipment',(data)=>{
               console.log(data);
               this.setState({
@@ -302,6 +316,15 @@ class App extends React.Component {
 
             });
 
+            zoneSocket.on('craftItem',(data)=>{
+              console.log(data);
+              this.setState({
+                craftSent:false,
+                craftResponse:data.responseMessage,
+                itemBeingCrafted:data.itemBeingCrafted
+              });
+            });
+
             zoneSocket.on('deathSignal',(data)=>{
               console.log('death');
               this.socket.disconnect();
@@ -344,6 +367,14 @@ class App extends React.Component {
           socket.on('getPlayerItems',(data)=>{
             this.setState({
               playerItems:data
+            });
+          });
+
+          socket.on('getPlayerBlueprints',(data)=>{
+            console.log('here please!!!');
+            console.log(data);
+            this.setState({
+              playerBlueprints:data
             });
           });
 
@@ -502,6 +533,48 @@ class App extends React.Component {
     }
   }
 
+  handleOpenBlueprintModal = (blueprint)=>{
+    let blueprintResources = blueprint.blueprint_resources;
+    let playerResources = this.state.playerResources;
+
+    for(let i = 0 ; i < blueprintResources.length ; i++){
+      let blueprintResourceId = blueprintResources[i].resource_id;
+      if(playerResources.length > 0){
+        for(let x = 0 ; x < playerResources.length ; x++){
+          let playerResourceId = playerResources[x].resource_id;
+          if(blueprintResourceId===playerResourceId){
+            blueprintResources[i].amount_in_inventory = playerResources[x].amount;
+            break;
+          }else{
+            blueprintResources[i].amount_in_inventory = 0;
+          }
+        }
+      }else{
+        blueprintResources[i].amount_in_inventory = 0;
+      }
+
+    }
+
+    this.setState({
+      showBlueprintModal:true,
+      itemBeingCrafted:blueprintResources
+    });
+  }
+
+  handleCloseBlueprintModal = ()=>{
+    this.setState({
+      showBlueprintModal:false
+    },()=>{
+      setTimeout(()=>{
+        this.setState({
+          itemBeingCrafted:[],
+          craftSent:false,
+          craftResponse:''
+        });
+      },150);
+    });
+  }
+
   handleCloseTradeWithNpcModal = ()=>{
     this.setState({
       showTradeWithNpcModal:false
@@ -590,8 +663,22 @@ class App extends React.Component {
   }
 
   useItem = (item)=>{
-    console.log(item);
-    this.zoneSocket.emit('useItem',item);
+    if(item.item_effect_type==='blueprint'){
+      let blueprints = this.state.playerBlueprints;
+      let found = false;
+      for(let i = 0 ; i < blueprints.length ; i++){
+        if(blueprints[i].blueprint_id===item.item_id){
+          found = true;
+        }
+      }
+      if(found){
+        this.socket.emit('consoleMessage','You have already downloaded this blueprint.');
+      }else{
+        this.zoneSocket.emit('useItem',item);
+      }
+    }else{
+      this.zoneSocket.emit('useItem',item);
+    }
   }
 
   equipItem = (item)=>{
@@ -613,6 +700,24 @@ class App extends React.Component {
     this.zoneSocket.emit('unequipItem',equipment);
   }
 
+  craftItem = (item)=>{
+    for(let i = 0 ; i < item.length ; i++){
+      if(item[i].amount_in_inventory < item[i].amount){
+        this.setState({
+          craftResponse:'You don\'t have enough resources'
+        });
+        return false;
+      }
+    }
+    this.zoneSocket.emit('craftItem',{
+      playerId:this.state.playerInfo.player_id,
+      itemBeingCrafted:item
+    });
+    this.setState({
+      craftSent:true
+    });
+  }
+
   render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
@@ -622,6 +727,8 @@ class App extends React.Component {
       <div className="App" onContextMenu={(e)=>{}}>
         <TradeWithNpcModal showTradeWithNpcModal={this.state.showTradeWithNpcModal} handleCloseTradeWithNpcModal={this.handleCloseTradeWithNpcModal} itemsBeingTraded={this.state.itemsBeingTraded}
           handleChangeAmountWanted={this.handleChangeAmountWanted} buyTradedItems={this.buyTradedItems} tradeSent={this.state.tradeSent} tradeResponse={this.state.tradeResponse}/>
+        <BlueprintModal showBlueprintModal={this.state.showBlueprintModal} handleCloseBlueprintModal={this.handleCloseBlueprintModal} itemBeingCrafted={this.state.itemBeingCrafted} craftItem={this.craftItem}
+        craftSent={this.state.craftSent} craftResponse={this.state.craftResponse} />
         <div className="Travelling" style={this.state.showLoading?{'display':'flex'}:{'display':'none'}}>
           <img src={travellingPath} />
         </div>
@@ -699,11 +806,14 @@ class App extends React.Component {
           <div className="row Footer fixed-bottom">
             <div className="col-md-4 col-sm-4 column InfoBox hideonmobile">
               <div className="row Tabs">
-                <div className="col-md-6 col-sm-6 tabcolumn" style={this.state.showPersonalInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
+                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showPersonalInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
                   <p>Personal Information</p>
                 </div>
-                <div className="col-md-6 col-sm-6 tabcolumn" style={this.state.showZoneInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:false, showZoneInfo:true })}}>
+                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showZoneInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:false, showZoneInfo:true })}}>
                   <p>Zone Information</p>
+                </div>
+                <div className="col-md-4 col-sm-4 tabcolumn" >
+                  <p>Allies</p>
                 </div>
               </div>
               <div className="row InformationBox">
@@ -735,19 +845,23 @@ class App extends React.Component {
             </div>
             <div className="col-md-4 col-sm-4 column hideonmobile">
               <div className="row Tabs">
-                <div className="col-md-4 col-sm-4 tabcolumn equipmentTab" style={this.state.showEquipment ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:true, showItems:false, showResources:false })}}>
+                <div className="col-md-3 col-sm-3 tabcolumn equipmentTab" style={this.state.showEquipment ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:true, showItems:false, showResources:false, showCrafting:false })}}>
                   <p>Equipment</p>
                 </div>
-                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showItems ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:false, showItems:true, showResources:false })}}>
+                <div className="col-md-3 col-sm-3 tabcolumn" style={this.state.showItems ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:false, showItems:true, showResources:false, showCrafting:false })}}>
                   <p>Items</p>
                 </div>
-                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showResources ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:false, showItems:false, showResources:true })}}>
+                <div className="col-md-3 col-sm-3 tabcolumn" style={this.state.showResources ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:false, showItems:false, showResources:true, showCrafting:false })}}>
                   <p>Resources</p>
+                </div>
+                <div className="col-md-3 col-sm-3 tabcolumn" style={this.state.showCrafting ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:false, showItems:false, showResources:false, showCrafting:true })}}>
+                  <p>Crafting</p>
                 </div>
               </div>
               <Equipment show={this.state.showEquipment} playerEquipment={this.state.playerEquipment} setEquipmentInContextMenu={this.setEquipmentInContextMenu} />
               <Items show={this.state.showItems} playerItems={this.state.playerItems} setItemInContextMenu={this.setItemInContextMenu} />
               <Resources show={this.state.showResources} playerResources={this.state.playerResources} />
+              <Crafting show={this.state.showCrafting} playerBlueprints={this.state.playerBlueprints} handleOpenBlueprintModal={this.handleOpenBlueprintModal}/>
             </div>
           </div>
         </div>

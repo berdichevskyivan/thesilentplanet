@@ -35,6 +35,12 @@ CREATE TABLE player_equipment (
   equipment_slot_id SMALLINT
 );
 
+CREATE TABLE player_blueprints (
+  player_id SMALLINT,
+  blueprint_id SMALLINT,
+  blueprint_name TEXT
+);
+
 CREATE TABLE zones (
   zone_id SMALLINT,
   zone_name VARCHAR(40),
@@ -109,7 +115,8 @@ CREATE TABLE equipment_slots (
   equipment_slot_name VARCHAR(35)
 );
 
-CREATE TABLE crafting (
+CREATE TABLE blueprints (
+  blueprint_id SMALLINT,
   item_id SMALLINT,
   resource_id SMALLINT,
   amount SMALLINT
