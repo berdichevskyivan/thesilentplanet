@@ -1,6 +1,7 @@
 const express = require('express');
 const fs = require('fs');
 const https = require('https');
+const http = require('http');
 const path = require('path');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
@@ -14,12 +15,13 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
-var options = {
-  key: fs.readFileSync(__dirname+'/ssl/file.pem'),
-  cert: fs.readFileSync(__dirname+'/ssl/file.crt')
-};
+// var options = {
+//   key: fs.readFileSync(__dirname+'/ssl/file.pem'),
+//   cert: fs.readFileSync(__dirname+'/ssl/file.crt')
+// };
 
-var server = https.createServer(options, app);
+//var server = https.createServer(options, app);
+var server = http.createServer(app);
 
 // Priority serve any static files.
 app.use(express.static(path.resolve(__dirname, '../react-ui/build')));
