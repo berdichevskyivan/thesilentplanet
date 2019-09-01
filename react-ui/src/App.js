@@ -163,7 +163,7 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('ws://'+url, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('wss://'+url, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
@@ -181,7 +181,7 @@ class App extends React.Component {
               zoneVideoUrl:data.zone_video_url
             });
 
-            this.zoneSocket = io('ws://'+url+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+            this.zoneSocket = io('wss://'+url+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
             const zoneSocket = this.zoneSocket;
 
             zoneSocket.on('changeZone',()=>{

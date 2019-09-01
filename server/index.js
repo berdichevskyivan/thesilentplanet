@@ -1,4 +1,6 @@
 const express = require('express');
+const fs = require('fs');
+const https = require('https');
 const path = require('path');
 const cluster = require('cluster');
 const numCPUs = require('os').cpus().length;
@@ -12,22 +14,23 @@ const PORT = process.env.PORT || 5000;
 
 const app = express();
 
+var options = {
+  key: fs.readFileSync(__dirname+'/ssl/file.pem'),
+  cert: fs.readFileSync(__dirname+'/ssl/file.crt')
+};
+
+var server = https.createServer(options, app);
+
 // Priority serve any static files.
 app.use(express.static(path.resolve(__dirname, '../react-ui/build')));
-
-// Answer API requests.
-app.get('/api', function (req, res) {
-  res.set('Content-Type', 'application/json');
-  res.send('{"message":"Hello from the custom server!"}');
-});
 
 // All remaining requests return the React app, so it can handle routing.
 app.get('*', function(request, response) {
   response.sendFile(path.resolve(__dirname, '../react-ui/build', 'index.html'));
 });
 
-var server = app.listen(PORT, function () {
-  console.error(`Node ${isDev ? 'dev server' : 'cluster worker '+process.pid}: listening on port ${PORT}`);
+server.listen(PORT, function () {
+  console.error(`Node server listening on port ${PORT}`);
 });
 
 const io = socketio(server);
