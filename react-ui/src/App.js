@@ -154,6 +154,7 @@ class App extends React.Component {
   }
 
   callThisFunction = ()=>{
+    let url = window.location.hostname.includes('heroku') ? window.location.hostname : window.location.hostname+':5000';
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username===null || userUniqueID===null){
@@ -162,7 +163,7 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('ws://'+window.location.hostname, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://'+url, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
@@ -180,7 +181,7 @@ class App extends React.Component {
               zoneVideoUrl:data.zone_video_url
             });
 
-            this.zoneSocket = io('ws://'+window.location.hostname+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+            this.zoneSocket = io('ws://'+url+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
             const zoneSocket = this.zoneSocket;
 
             zoneSocket.on('changeZone',()=>{
