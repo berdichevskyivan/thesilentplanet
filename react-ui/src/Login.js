@@ -24,6 +24,7 @@ class Login extends React.Component {
   }
 
   componentWillMount(){
+    console.log(process.env.REACT_APP_WS_PORT);
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username!==null && userUniqueID!==null){
