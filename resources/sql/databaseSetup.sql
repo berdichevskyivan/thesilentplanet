@@ -41,6 +41,11 @@ CREATE TABLE player_blueprints (
   blueprint_name TEXT
 );
 
+CREATE TABLE player_available_zones (
+  player_id SMALLINT,
+  zone_id SMALLINT
+);
+
 CREATE TABLE zones (
   zone_id SMALLINT,
   zone_name VARCHAR(40),

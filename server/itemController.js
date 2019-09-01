@@ -27,6 +27,8 @@ const useItemAndEmit = (socket,item)=>{
     }else{
       if(item.item_effect_type==='blueprint'){
         learnBlueprintAndEmit(socket,item);
+      }else if(item.item_effect_type==='coordinates'){
+        learnZoneAndEmit(socket,item);
       }else{
         console.log('this was not executed... RIGHT!??');
         let sqlQuery = 'update players set '+item.item_effect_modified_stat+'='+item.item_effect_modified_stat+(item.item_effect_type==='increase'?'+':'-')+amountIncreased+' where player_name=\''+socket.username+'\';';
@@ -39,6 +41,19 @@ const useItemAndEmit = (socket,item)=>{
     }
 
   })().catch(err=>console.log(err));
+}
+
+const learnZoneAndEmit = (socket,item)=>{
+
+  (async ()=>{
+    console.log('learning zone');
+    let insertZone = await db.pool.query('insert into player_available_zones select player_id,$1 from players where player_name=$2',[item.item_effect_impact,socket.username]);
+    let deleteCoordinatesFromInv = await db.pool.query('update player_items set amount=amount-1 where item_id='+item.item_id+' and player_id in (select player_id from players where player_name=\''+socket.username+'\');');
+    db.getPlayerItemsAndEmit(socket);
+    db.getOtherZonesAndEmit(socket);
+    socket.emit('consoleMessage','You have downloaded '+item.item_name+' into your system.');
+  })().catch(err=>console.log(err));
+
 }
 
 const learnBlueprintAndEmit = (socket,item)=>{

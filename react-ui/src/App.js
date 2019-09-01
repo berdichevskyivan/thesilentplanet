@@ -676,6 +676,19 @@ class App extends React.Component {
       }else{
         this.zoneSocket.emit('useItem',item);
       }
+    }else if(item.item_effect_type==='coordinates'){
+      let otherZones = this.state.otherZones;
+      let found = false;
+      for(let i = 0 ; i < otherZones.length ; i++){
+        if(parseInt(otherZones[i].zone_id)===parseInt(item.item_effect_impact)){
+          found = true;
+        }
+      }
+      if(found){
+        this.socket.emit('consoleMessage','You have already downloaded these coordinates.');
+      }else{
+        this.zoneSocket.emit('useItem',item);
+      }
     }else{
       this.zoneSocket.emit('useItem',item);
     }
@@ -806,14 +819,11 @@ class App extends React.Component {
           <div className="row Footer fixed-bottom">
             <div className="col-md-4 col-sm-4 column InfoBox hideonmobile">
               <div className="row Tabs">
-                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showPersonalInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
+                <div className="col-md-6 col-sm-6 tabcolumn" style={this.state.showPersonalInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
                   <p>Personal Information</p>
                 </div>
-                <div className="col-md-4 col-sm-4 tabcolumn" style={this.state.showZoneInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:false, showZoneInfo:true })}}>
+                <div className="col-md-6 col-sm-6 tabcolumn" style={this.state.showZoneInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:false, showZoneInfo:true })}}>
                   <p>Zone Information</p>
-                </div>
-                <div className="col-md-4 col-sm-4 tabcolumn" >
-                  <p>Allies</p>
                 </div>
               </div>
               <div className="row InformationBox">

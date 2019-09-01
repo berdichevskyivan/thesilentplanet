@@ -41,15 +41,13 @@ const initializeZones = (io)=>{
 const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
   db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
   mobCount++;
-  db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
-  mobCount++;
   setInterval(()=>{
     if(usersInZone.length>0){
       console.log('Generating Mob for Zone '+zoneId);
       db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
       mobCount++;
     }
-  },220000);
+  },150000);
 };
 
 const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=>{
@@ -61,7 +59,7 @@ const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=
       db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
       resourceCount++;
     }
-  },70000);
+  },300000);
 };
 
 const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
@@ -149,7 +147,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
     nsp.emit('generateZoneNpc',mobsInZone);
     nsp.emit('generateZoneResources',resourcesInZone);
     db.getZoneInformationAndEmit(socket,zoneId);
-    db.getOtherZonesAndEmit(socket,zoneId);
+    db.getOtherZonesAndEmit(socket);
 
     socket.on('attackNpc',function(data){
       var attackedNpcIndex=null;

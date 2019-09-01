@@ -99,8 +99,8 @@ const getZoneInformationAndEmit = (socket,zone_id)=>{
   });
 }
 
-const getOtherZonesAndEmit = (socket,zone_id)=>{
-  pool.query('select * from zones order by zone_id asc',(err,res)=>{
+const getOtherZonesAndEmit = (socket)=>{
+  pool.query('select * from zones where zone_id in (select zone_id from player_available_zones where player_id in (select player_id from players where player_name = $1));',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{
@@ -155,18 +155,19 @@ const getResourceFromZoneAndEmit = (zone_id,nsp,resourcesInZone,resourceCount)=>
 }
 
 const insertUsernameAndPasswordAndEmit = (socket,username,password,loggedInUsers)=>{
-  pool.query('INSERT INTO players(player_name,player_password) VALUES ($1,$2);',[username,password],(err,res)=>{
-    if(err){
-      console.log(err);
-      if(err.code === '23505'){
-        socket.emit('submitSignup',{ responseStatus:'ERROR', responseMessage:'Username already taken' });
-      }else{
-        socket.emit('submitSignup',{ responseStatus:'ERROR', responseMessage:'There was an error' });
-      }
+  (async ()=>{
+    let insertNewPlayer = await pool.query('INSERT INTO players(player_name,player_password) VALUES ($1,$2);',[username,password]);
+    let insertFirstZone = await pool.query('INSERT INTO player_available_zones SELECT player_id,$1 from players where player_name=$2',[1,username]);
+    console.log('User '+username+' was inserted into the database.');
+    console.log('First zone was inserted into the database.');
+    loggedInUsers[username] = genID();
+    socket.emit('submitSignup',{ responseStatus:'OK', responseMessage:'Sign up was successful', username:username, userUniqueID:loggedInUsers[username] });
+  })().catch(err=>{
+    console.log(err);
+    if(err.code === '23505'){
+      socket.emit('submitSignup',{ responseStatus:'ERROR', responseMessage:'Username already taken' });
     }else{
-      console.log('User '+username+' was inserted into the database.');
-      loggedInUsers[username] = genID();
-      socket.emit('submitSignup',{ responseStatus:'OK', responseMessage:'Sign up was successful', username:username, userUniqueID:loggedInUsers[username] });
+      socket.emit('submitSignup',{ responseStatus:'ERROR', responseMessage:'There was an error' });
     }
   });
 }
