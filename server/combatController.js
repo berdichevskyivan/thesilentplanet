@@ -26,7 +26,7 @@ const attackUser = (nsp,socket,data,usersInZone)=>{
       // Tell everybody attacking user is looting attacked user
       nsp.to(attackedUserSocketId).emit('consoleMessage',data.attackingUserName+' has killed you and looted your items and currency.');
       nsp.emit('localChatMessage',data.attackingUserName+' has killed '+data.attackedUserName+ ' and looted all his items and currency.');
-      socket.emit('consoleMessage','You killed 'data.attackedUserName+'.');
+      socket.emit('consoleMessage','You killed '+data.attackedUserName+'.');
       // Send death signal to attacked User
       nsp.to(attackedUserSocketId).emit('consoleMessage','You died.');
       nsp.to(attackedUserSocketId).emit('consoleMessage','Reuploading consciousness into new host...');
