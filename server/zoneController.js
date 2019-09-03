@@ -1,6 +1,7 @@
 const db = require('./dbcontroller.js');
 const tradeController = require('./tradeController.js');
 const itemController = require('./itemController.js');
+const combatController = require('./combatController.js');
 
 var availableZones = [];
 
@@ -144,7 +145,6 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
     }
 
     db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
-    //nsp.emit('usersInZone',usersInZone);
     nsp.emit('generateZoneNpc',mobsInZone);
     nsp.emit('generateZoneResources',resourcesInZone);
     db.getZoneInformationAndEmit(socket,zoneId);
@@ -271,6 +271,10 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
     socket.on('craftItem',(data)=>{
       console.log(data);
       itemController.craftItemAndEmit(socket,data);
+    });
+
+    socket.on('attackUser',(data)=>{
+      combatController.attackUser(nsp,socket,data,usersInZone);
     });
 
     //LOCAL

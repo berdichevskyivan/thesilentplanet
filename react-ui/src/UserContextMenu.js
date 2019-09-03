@@ -6,8 +6,8 @@ import './UserContextMenu.css';
 const UserContextMenu = (props)=>{
   return (
     <Menu id="menu_id" className="UserContextMenu" onShown={props.handleShowUserContextMenu} onHidden={props.handleHideUserContextMenu}>
-       <p>{props.username}</p>
-       <Item onClick={()=>{console.log(props.username)}}>Attack</Item>
+       <p>{props.user.username}</p>
+       <Item onClick={()=>{props.attackUser(props.user.username,props.user.player_id)}} >Attack</Item>
        <Item onClick={()=>{console.log('i was clicked')}}>Repair</Item>
        <Item onClick={()=>{console.log('i was clicked')}}>Steal</Item>
        <Item onClick={()=>{console.log('i was clicked')}}>Hack</Item>

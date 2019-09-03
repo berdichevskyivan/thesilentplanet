@@ -154,7 +154,7 @@ class App extends React.Component {
   }
 
   callThisFunction = ()=>{
-    let url = window.location.hostname.includes('heroku') ? window.location.hostname : window.location.hostname+':5000';
+    let url = window.location.hostname.includes('heroku') ? 'wss://'+window.location.hostname : 'ws://'+window.location.hostname+':5000';
     var username = localStorage.getItem('username');
     var userUniqueID = localStorage.getItem('userUniqueID');
     if(username===null || userUniqueID===null){
@@ -163,7 +163,7 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('ws://'+url, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io(url, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
@@ -181,7 +181,7 @@ class App extends React.Component {
               zoneVideoUrl:data.zone_video_url
             });
 
-            this.zoneSocket = io('ws://'+url+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+            this.zoneSocket = io(url+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
             const zoneSocket = this.zoneSocket;
 
             zoneSocket.on('changeZone',()=>{
@@ -732,6 +732,23 @@ class App extends React.Component {
     });
   }
 
+  attackUser = (attackedUserName,attackedUserId)=>{
+    let attackingUserId = this.state.playerInfo.player_id;
+    let attackingUserName = this.state.playerInfo.player_name;
+    let attackingUserPower = this.state.playerInfo.attack_power;
+    if(attackedUserId===attackingUserId){
+      this.socket.emit('consoleMessage','You can\'t attack yourself.');
+    }else{
+      this.zoneSocket.emit('attackUser',{
+        attackingUserId:attackingUserId,
+        attackingUserName:attackingUserName,
+        attackingUserPower:attackingUserPower,
+        attackedUserId:attackedUserId,
+        attackedUserName:attackedUserName
+      });
+    }
+  }
+
   render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
@@ -762,7 +779,7 @@ class App extends React.Component {
                   { this.state.usersInZone.map((user)=>{
                     var percentage = (user.stability * 100) / user.max_stability ;
                     var style = {'width':percentage+'%'};
-                    return <MenuProvider id="menu_id" style={{'display':'contents'} } onContextMenu={()=>{this.setState({userInContextMenu:user.username})}} >
+                    return <MenuProvider id="menu_id" style={{'display':'contents'} } onContextMenu={()=>{this.setState({userInContextMenu:user})}} >
                       <li>
                       <div className="row UserRow">
                         <div className="col-md-2 col-sm-2 UserColumn">
@@ -891,7 +908,8 @@ class App extends React.Component {
             </div>
           </div>
         </div>
-        <UserContextMenu username={this.state.userInContextMenu} handleShowUserContextMenu={this.handleShowUserContextMenu} handleHideUserContextMenu={this.handleHideUserContextMenu} />
+        <UserContextMenu user={this.state.userInContextMenu} handleShowUserContextMenu={this.handleShowUserContextMenu}
+                         handleHideUserContextMenu={this.handleHideUserContextMenu} attackUser={this.attackUser}/>
         <ItemContextMenu item={this.state.itemInContextMenu} useItem={this.useItem} equipItem={this.equipItem}/>
         <EquipmentContextMenu equipment={this.state.equipmentInContextMenu} unequipItem={this.unequipItem}/>
       </div>

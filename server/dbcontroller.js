@@ -28,6 +28,16 @@ const getPlayerInfoAndEmit = (socket)=>{
   });
 }
 
+const getPlayerInfoAndEmitToSocketId = (nsp,socketId,playerName)=>{
+  pool.query('select a.*,b.zone_id,b.zone_namespace,b.zone_video_url from players a, zones b where a.current_zone_id=b.zone_id and player_name = $1',[playerName],(err,res)=>{
+    if(err){
+      console.log(err);
+    }else{
+      nsp.to(socketId).emit('getPlayerInformation',res.rows[0]);
+    }
+  });
+}
+
 const getPlayerEquipmentAndEmit = (socket)=>{
   let sqlForPlayerEquipment = 'select es.equipment_slot_id,'
   +'es.equipment_slot_name,items.item_id,items.item_name,items.item_text,items.item_effect_type,items.item_effect_modified_stat,items.item_effect_impact'
@@ -282,7 +292,7 @@ const npcAttackUserAndEmit = (nsp,user,mobInZone,usersInZone)=>{
       const npcLootsPlayer = await pool.query('select a.amount,b.item_name,b.item_id,b.item_text,b.item_cost from player_items a, items b where a.item_id = b.item_id and a.player_id = $1 and a.amount!=0;',[stabilityCheck.rows[0].player_id]);
       if(npcLootsPlayer.rows.length > 0){
         console.log('NPC will loot now');
-        for(var i = 0 ; i < npcLootsPlayer.rows.length ; i++){
+        for(let i = 0 ; i < npcLootsPlayer.rows.length ; i++){
           mobInZone.npc_items.push(npcLootsPlayer.rows[i]);
           console.log('looting this item:');
           console.log(npcLootsPlayer.rows[i]);
@@ -299,6 +309,7 @@ const npcAttackUserAndEmit = (nsp,user,mobInZone,usersInZone)=>{
       const deletePlayerResources = await pool.query('delete from player_resources where player_id='+stabilityCheck.rows[0].player_id);
       const deletePlayerEquipment = await pool.query('delete from player_equipment where player_id='+stabilityCheck.rows[0].player_id);
       const deletePlayerBlueprints = await pool.query('delete from player_blueprints where player_id='+stabilityCheck.rows[0].player_id);
+      const deletePlayerZones = await pool.query('delete from player_available_zones where player_id='+stabilityCheck.rows[0].player_id+' and zone_id!=1');
       playerDied = true;
     }else{
       console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
@@ -369,9 +380,10 @@ const getUsersInZoneInfoAndEmit = (nsp,usersInZone)=>{
   (async ()=>{
     //need to loop usersInZone and assign at the very least stability and max_stability
     for(let i = 0 ; i < usersInZone.length ; i++ ){
-      let assignStability = await pool.query('select stability,max_stability from players where player_name=$1',[usersInZone[i].username]);
+      let assignStability = await pool.query('select stability,max_stability,player_id from players where player_name=$1',[usersInZone[i].username]);
       usersInZone[i].stability = assignStability.rows[0].stability;
       usersInZone[i].max_stability = assignStability.rows[0].max_stability;
+      usersInZone[i].player_id = assignStability.rows[0].player_id;
     }
     //Now I can send it back
     nsp.emit('usersInZone',usersInZone);
@@ -381,6 +393,7 @@ const getUsersInZoneInfoAndEmit = (nsp,usersInZone)=>{
 module.exports = {
   pool:pool,
   getPlayerInfoAndEmit:getPlayerInfoAndEmit,
+  getPlayerInfoAndEmitToSocketId:getPlayerInfoAndEmitToSocketId,
   getPlayerEquipmentAndEmit:getPlayerEquipmentAndEmit,
   getPlayerResourcesAndEmit:getPlayerResourcesAndEmit,
   getPlayerItemsAndEmit:getPlayerItemsAndEmit,
