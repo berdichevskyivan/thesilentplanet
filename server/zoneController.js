@@ -75,7 +75,7 @@ const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
               let user = retrieveRandomUserFromZoneUsers(usersInZone);
               console.log('Will attack '+user.username);
               mobInZone.attacking_user = user.username;
-              let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone);
+              let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone,usersInZone);
               console.log('this is attackResult');
               console.log(attackResult);
               if(attackResult) break;
@@ -85,7 +85,7 @@ const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
               let user = retrieveUserFromZoneUsers(attackingUser,usersInZone);
               if(user){
                 console.log(user);
-                let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone);
+                let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone,usersInZone);
                 console.log('this is attackResult');
                 console.log(attackResult);
                 if(attackResult) break;
@@ -96,7 +96,7 @@ const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
                 user = retrieveRandomUserFromZoneUsers(usersInZone);
                 console.log('Will attack '+user.username);
                 mobInZone.attacking_user = user.username;
-                let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone);
+                let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone,usersInZone);
                 console.log('this is attackResult');
                 console.log(attackResult);
                 if(attackResult) break;
@@ -143,7 +143,8 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
       });
     }
 
-    nsp.emit('usersInZone',usersInZone);
+    db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
+    //nsp.emit('usersInZone',usersInZone);
     nsp.emit('generateZoneNpc',mobsInZone);
     nsp.emit('generateZoneResources',resourcesInZone);
     db.getZoneInformationAndEmit(socket,zoneId);
@@ -256,15 +257,15 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
 
     socket.on('useItem',function(data){
       console.log(data);
-      itemController.useItemAndEmit(socket,data);
+      itemController.useItemAndEmit(nsp,socket,data,usersInZone);
     });
 
     socket.on('equipItem',function(data){
-      itemController.equipItemAndEmit(socket,data);
+      itemController.equipItemAndEmit(socket,data,nsp,usersInZone);
     });
 
     socket.on('unequipItem',function(data){
-      itemController.unequipItemAndEmit(socket,data);
+      itemController.unequipItemAndEmit(socket,data,nsp,usersInZone);
     });
 
     socket.on('craftItem',(data)=>{
@@ -291,7 +292,8 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
         }
       }
       usersInZone.splice(disconnectedId,1);
-      nsp.emit('usersInZone',usersInZone);
+      //nsp.emit('usersInZone',usersInZone);
+      db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
     });
 
   });

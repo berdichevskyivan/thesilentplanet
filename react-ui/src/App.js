@@ -163,7 +163,7 @@ class App extends React.Component {
       this.setState({
         playerName:username
       });
-      this.socket = io('wss://'+url, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+      this.socket = io('ws://'+url, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
       this.socket.on('sessionStatus',(data)=>{
         if(data.sessionStatus==='invalid'){
           localStorage.clear();
@@ -181,7 +181,7 @@ class App extends React.Component {
               zoneVideoUrl:data.zone_video_url
             });
 
-            this.zoneSocket = io('wss://'+url+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
+            this.zoneSocket = io('ws://'+url+data.zone_namespace, {transports: ['websocket'],query:'username='+username+'&userUniqueID='+userUniqueID});
             const zoneSocket = this.zoneSocket;
 
             zoneSocket.on('changeZone',()=>{
@@ -760,8 +760,23 @@ class App extends React.Component {
               <div className="row CurrentPlayers">
                 <ul>
                   { this.state.usersInZone.map((user)=>{
+                    var percentage = (user.stability * 100) / user.max_stability ;
+                    var style = {'width':percentage+'%'};
                     return <MenuProvider id="menu_id" style={{'display':'contents'} } onContextMenu={()=>{this.setState({userInContextMenu:user.username})}} >
-                      <li><img src={connectedPath} />{user.username}</li>
+                      <li>
+                      <div className="row UserRow">
+                        <div className="col-md-2 col-sm-2 UserColumn">
+                          <img src={connectedPath} />
+                        </div>
+                        <div className="col-md-5 col-sm-5 UserColumn">
+                          <p id="usersUsername">{user.username}</p>
+                        </div>
+                        <div className="col-md-5 col-sm-5 UserColumn">
+                          <p id="stabilityMeter">{user.stability}/{user.max_stability}</p>
+                          <div className="UserStabilityBar" style={style} ></div>
+                        </div>
+                      </div>
+                      </li>
                     </MenuProvider>
                   }) }
                 </ul>

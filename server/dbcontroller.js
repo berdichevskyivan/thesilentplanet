@@ -1,15 +1,15 @@
 const { Client, Pool } = require('pg');
 
-// //For local dev
-// const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL
-// });
-
-// For heroku
+//For local dev
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:true
+  connectionString: process.env.DATABASE_URL
 });
+
+// // For heroku
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl:true
+// });
 
 var genID = function guidGenerator() {
     var S4 = function() {
@@ -259,7 +259,7 @@ const deleteResourceFromListAndEmit = (data,resourcesInZone,nsp,socket)=>{
   nsp.emit('localChatMessage',data.collectingUser+' has collected '+data.collectedResourceName+'.');
 }
 
-const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
+const npcAttackUserAndEmit = (nsp,user,mobInZone,usersInZone)=>{
 
   return (async ()=>{
     let playerDied = false;
@@ -267,6 +267,10 @@ const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
     const stabilityCheck = await pool.query('select player_id,player_name,player_password,stability,currency from players where player_name=$1',[user.username]);
     if(stabilityCheck.rows[0].stability < 1){
       console.log('Player died');
+      //Update to Zero and Emit
+      const stabilityUpdate = await pool.query('update players set stability = 0 where player_name=$1',[user.username]);
+      //Emit User list after this
+      getUsersInZoneInfoAndEmit(nsp,usersInZone);
       nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
       nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
       nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' looted '+stabilityCheck.rows[0].currency+' currency from you and all your items.');
@@ -298,6 +302,7 @@ const npcAttackUserAndEmit = (nsp,user,mobInZone)=>{
       playerDied = true;
     }else{
       console.log(mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
+      getUsersInZoneInfoAndEmit(nsp,usersInZone);
       nsp.to(user.socketId).emit('consoleMessage',mobInZone.target_name+' attacked you for '+mobInZone.attack_power+' SP.');
       nsp.emit('localChatMessage',mobInZone.target_name+' has attacked '+user.username+' for '+mobInZone.attack_power+' SP.');
       getPlayerInfoAndEmitToNspSocket(nsp,user);
@@ -360,6 +365,19 @@ const lootNpcAndEmit = (npc,socket)=>{
   })().catch(err=>console.log(err));
 }
 
+const getUsersInZoneInfoAndEmit = (nsp,usersInZone)=>{
+  (async ()=>{
+    //need to loop usersInZone and assign at the very least stability and max_stability
+    for(let i = 0 ; i < usersInZone.length ; i++ ){
+      let assignStability = await pool.query('select stability,max_stability from players where player_name=$1',[usersInZone[i].username]);
+      usersInZone[i].stability = assignStability.rows[0].stability;
+      usersInZone[i].max_stability = assignStability.rows[0].max_stability;
+    }
+    //Now I can send it back
+    nsp.emit('usersInZone',usersInZone);
+  })().catch(err=>console.log(err))
+}
+
 module.exports = {
   pool:pool,
   getPlayerInfoAndEmit:getPlayerInfoAndEmit,
@@ -378,5 +396,6 @@ module.exports = {
   stealFromNpcAndEmit:stealFromNpcAndEmit,
   getNpcDialogueAndEmit:getNpcDialogueAndEmit,
   npcAttackUserAndEmit:npcAttackUserAndEmit,
-  lootNpcAndEmit:lootNpcAndEmit
+  lootNpcAndEmit:lootNpcAndEmit,
+  getUsersInZoneInfoAndEmit:getUsersInZoneInfoAndEmit
 }

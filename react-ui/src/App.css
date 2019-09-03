@@ -129,10 +129,6 @@ p {
   padding: 3px;
 }
 
-.CurrentPlayers ul li:hover {
-  text-decoration: underline;
-}
-
 .CurrentPlayers ul li img, .OtherZones ul li img {
   height: 16px;
   max-height: 16px;
@@ -214,6 +210,43 @@ button { float:right; background: #000000a8; color: lime; border: none; padding:
 .Travelling img {
   height: 150px;
   width: 150px;
+}
+
+.UserRow {
+  width: 100%;
+  margin: 0;
+  margin-bottom: 5px;
+}
+
+.UserColumn {
+  padding: 0 !important;
+}
+
+.UserColumn:last-child {
+  border: 1px solid lime;
+  display: flex;
+  align-items: center;
+}
+
+.UserStabilityBar {
+  background: #00ff009e;
+  font-weight: bold;
+  height: 100%;
+  font-family: monospace;
+}
+
+p#stabilityMeter {
+  position: absolute;
+  width: 100%;
+  color: white;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-size: 12px;
+}
+
+p#usersUsername {
+  text-align: left;
 }
 
 @media screen and (max-width: 600px) {

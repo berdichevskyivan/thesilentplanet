@@ -1,6 +1,6 @@
 const db = require('./dbcontroller.js');
 
-const useItemAndEmit = (socket,item)=>{
+const useItemAndEmit = (nsp,socket,item,usersInZone)=>{
   (async ()=>{
     //Check if stability doesnt go above max_stability
     let checkUserStats = await db.pool.query('select * from players where player_id in (select player_id from players where player_name=$1)',[socket.username]);
@@ -22,6 +22,7 @@ const useItemAndEmit = (socket,item)=>{
         const updateItemsResult = await db.pool.query('update player_items set amount=amount-1 where item_id='+item.item_id+' and player_id in (select player_id from players where player_name=\''+socket.username+'\');');
         db.getPlayerItemsAndEmit(socket);
         db.getPlayerInfoAndEmit(socket);
+        db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
         socket.emit('consoleMessage','You used 1 '+item.item_name+'. Your '+item.item_effect_modified_stat+' has '+item.item_effect_type+'d by '+amountIncreased+'.');
       }
     }else{
@@ -69,7 +70,7 @@ const learnBlueprintAndEmit = (socket,item)=>{
 
 }
 
-const equipItemAndEmit = (socket,item)=>{
+const equipItemAndEmit = (socket,item,nsp,usersInZone)=>{
   (async ()=>{
     console.log('equipping this item');
     console.log(item);
@@ -93,6 +94,7 @@ const equipItemAndEmit = (socket,item)=>{
       }
       db.getPlayerEquipmentAndEmit(socket);
       db.getPlayerInfoAndEmit(socket);
+      db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
     }else{
       console.log('user has an item equipped in that slot already, unequpping item');
       let unequipItemFirst = await unequipItemAndEmit(socket,checkIfUserHasItemEquipped.rows[0]);
@@ -111,11 +113,12 @@ const equipItemAndEmit = (socket,item)=>{
       }
       db.getPlayerEquipmentAndEmit(socket);
       db.getPlayerInfoAndEmit(socket);
+      db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
     }
   })().catch(err=>console.log(err));
 }
 
-const unequipItemAndEmit = (socket,item)=>{
+const unequipItemAndEmit = (socket,item, nsp, usersInZone)=>{
   return (async ()=>{
     console.log('unequpping this item');
     console.log(item);
@@ -139,6 +142,7 @@ const unequipItemAndEmit = (socket,item)=>{
     socket.emit('consoleMessage',item.item_name+' was unequipped.');
     db.getPlayerEquipmentAndEmit(socket);
     db.getPlayerInfoAndEmit(socket);
+    db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
     return true;
   })().catch(err=>console.log(err));
 }
