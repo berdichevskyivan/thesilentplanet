@@ -1,15 +1,15 @@
 const { Client, Pool } = require('pg');
 
-// //For local dev
-// const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL
-// });
-
-// For heroku
+//For local dev
 const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:true
+  connectionString: process.env.DATABASE_URL
 });
+
+// // For heroku
+// const pool = new Pool({
+//   connectionString: process.env.DATABASE_URL,
+//   ssl:true
+// });
 
 var genID = function guidGenerator() {
     var S4 = function() {
