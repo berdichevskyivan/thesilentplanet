@@ -18,7 +18,6 @@ INSERT INTO zone_resources VALUES
 
 INSERT INTO zone_npc VALUES
 (1,1),
-(1,2),
 (2,1),
 (2,2),
 (3,3),
@@ -52,6 +51,7 @@ INSERT INTO npc_resources VALUES
 
 INSERT INTO npc_items VALUES
 (1,1,1),
+(1,8,1),
 (1,2,1),
 (2,1,2),
 (2,2,1),
