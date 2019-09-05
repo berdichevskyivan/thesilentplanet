@@ -801,7 +801,7 @@ class App extends React.Component {
             <source src={this.state.zoneVideoUrl} type="video/mp4" />
           </video>
           <div className="row WorldView fixed-top">
-            <div className="col-md-2 col-sm-2 worldcolumn hideonmobile">
+            <div className="col-md-3 col-sm-3 worldcolumn hideonmobile">
               <div className="row WorldViewTabs">
                 <div className="col-md-12 col-sm-12 worldviewtab">
                   <p>Players Currently in Zone</p>
@@ -837,7 +837,7 @@ class App extends React.Component {
                            localChatInputMessage={this.state.localChatInputMessage} handleLocalChatKeyPress={this.handleLocalChatKeyPress} submitLocalChatMessage={this.submitLocalChatMessage}/>
               </div>
             </div>
-            <div className="col-md-8 col-sm-8 worldcolumn">
+            <div className="col-md-6 col-sm-6 worldcolumn">
               <div className="row ResourceZone" style={rowOrColumnForResource} onMouseOver={ ()=>{this.setState({mouseIsOverResourceZone:true})}} onMouseOut={()=>{this.setState({mouseIsOverResourceZone:false})}}>
                 { this.state.resourcesInZone.map((resource)=>{
                   return <ResourceCard resource={resource} collectResource={this.collectResource} />
@@ -851,7 +851,7 @@ class App extends React.Component {
                 }) }
               </div>
             </div>
-            <div className="col-md-2 col-sm-2 worldcolumn hideonmobile">
+            <div className="col-md-3 col-sm-3 worldcolumn hideonmobile">
               <div className="row WorldViewTabs">
                 <div className="col-md-12 col-sm-12 worldviewtab">
                   <p>Available Zones</p>
@@ -893,7 +893,7 @@ class App extends React.Component {
             </div>
           </div>
           <div className="row Footer fixed-bottom">
-            <div className="col-md-4 col-sm-4 column InfoBox hideonmobile">
+            <div className="col-md-3 col-sm-3 column InfoBox hideonmobile">
               <div className="row Tabs">
                 <div className="col-md-6 col-sm-6 tabcolumn" style={this.state.showPersonalInfo ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showPersonalInfo:true, showZoneInfo:false })}}>
                   <p>Personal Information</p>
@@ -907,13 +907,13 @@ class App extends React.Component {
                 {this.state.zoneInfo===null ? null : <ZoneInfo zone={this.state.zoneInfo} show={this.state.showZoneInfo}/>}
               </div>
             </div>
-            <div className="col-md-4 col-sm-4 column">
+            <div className="col-md-6 col-sm-6 column">
               <div className="ConsoleBox">
                 <Console show={this.state.showConsole} consoleMessages={this.state.consoleMessages} updateConsoleInputMessage={this.updateConsoleInputMessage}
                          consoleInputMessage={this.state.consoleInputMessage} handleConsoleKeyPress={this.handleConsoleKeyPress} submitConsoleMessage={this.submitConsoleMessage} />
               </div>
             </div>
-            <div className="col-md-4 col-sm-4 column hideonmobile">
+            <div className="col-md-3 col-sm-3 column hideonmobile">
               <div className="row Tabs">
                 <div className="col-md-3 col-sm-3 tabcolumn equipmentTab" style={this.state.showEquipment ? { 'background':'#00ff0091', 'color':'white'} : {} } onClick={()=>{this.setState({ showEquipment:true, showItems:false, showResources:false, showCrafting:false })}}>
                   <p>Equipment</p>
