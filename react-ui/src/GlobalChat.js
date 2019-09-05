@@ -15,9 +15,8 @@ const GlobalChat = (props)=>{
           return <li key={index}>{chatMessage.message}</li>
         }) }
       </ul>
-      <div className="inputBox">
+      <div className="inputBox notConsoleInputBox globalChatInput">
         <input id="m" autoComplete="off" onChange={props.updateGlobalChatInputMessage} value={props.globalChatInputMessage} onKeyPress={props.handleGlobalChatKeyPress} />
-        <button style={ { outline:'none' } } onClick={props.submitGlobalChatMessage}>Send</button>
       </div>
     </div>
   );

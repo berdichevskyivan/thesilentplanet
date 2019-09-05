@@ -10,6 +10,10 @@
   margin-left: 20px;
 }
 
+.EnemyCard:first-child {
+  margin-left:5px;
+}
+
 .EnemyImageRow {
   height: 60%;
   width: 100%;

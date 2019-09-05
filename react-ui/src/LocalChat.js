@@ -15,9 +15,8 @@ const LocalChat = (props)=>{
           return <li key={index}>{chatMessage.message}</li>
         }) }
       </ul>
-      <div className="inputBox">
+      <div className="inputBox notConsoleInputBox localChatInput">
         <input id="m" autoComplete="off" onChange={props.updateLocalChatInputMessage} value={props.localChatInputMessage} onKeyPress={props.handleLocalChatKeyPress} />
-        <button style={ { outline:'none' } } onClick={props.submitLocalChatMessage}>Send</button>
       </div>
     </div>
   );

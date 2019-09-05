@@ -43,24 +43,24 @@ const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
   db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
   mobCount++;
   setInterval(()=>{
-    if(usersInZone.length>0){
+    if(usersInZone.length>0 && mobsInZone.length<5){
       console.log('Generating Mob for Zone '+zoneId);
       db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
       mobCount++;
     }
-  },150000);
+  },110000);
 };
 
 const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=>{
   db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
   resourceCount++;
   setInterval(()=>{
-    if(usersInZone.length>0){
+    if(usersInZone.length>0 && resourcesInZone.length<10){
       console.log('Generating Resource for Zone '+zoneId);
       db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
       resourceCount++;
     }
-  },300000);
+  },200000);
 };
 
 const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
@@ -275,6 +275,10 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
 
     socket.on('attackUser',(data)=>{
       combatController.attackUser(nsp,socket,data,usersInZone);
+    });
+
+    socket.on('repairUser',(data)=>{
+      combatController.repairUser(nsp,socket,data,usersInZone);
     });
 
     //LOCAL

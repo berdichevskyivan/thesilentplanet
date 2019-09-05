@@ -17,8 +17,7 @@ const Console = (props)=>{
         }) }
       </ul>
       <div className="inputBox">
-        <input id="m" autoComplete="off" onChange={props.updateConsoleInputMessage} value={props.consoleInputMessage} onKeyPress={props.handleConsoleKeyPress} />
-        <button style={ { outline:'none' } } onClick={props.submitConsoleMessage}>Send</button>
+        <input id="consoleInput" autoComplete="off" onChange={props.updateConsoleInputMessage} value={props.consoleInputMessage} onKeyPress={props.handleConsoleKeyPress} />
       </div>
     </div>
   );

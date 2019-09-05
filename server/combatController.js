@@ -85,6 +85,53 @@ const attackUser = (nsp,socket,data,usersInZone)=>{
   })().catch(err=>console.log(err));
 }
 
+const repairUser = (nsp,socket,data,usersInZone)=>{
+  (async ()=>{
+    let repairedUserSocketId;
+    //Search for the socket_id of Attacked user in UsersInZone array
+    for(let i = 0 ; i < usersInZone.length ; i++){
+      if(usersInZone[i].username === data.repairedUserName){
+        repairedUserSocketId = usersInZone[i].socketId;
+      }
+    }
+    // Repair other user directly
+    let repairUser = await db.pool.query('update players set stability=stability+$1 where player_id=$2',[data.repairingAmount,data.repairedUserId]);
+    // Check if stability went over max_stability and if so, set it back to equal max_stability
+    let stabilityCheck = await db.pool.query('select stability,max_stability from players where player_id=$1',[data.repairedUserId]);
+    // Assign values
+    let repairedUserStability = stabilityCheck.rows[0].stability;
+    let repairedUserMaxStability = stabilityCheck.rows[0].max_stability;
+    if(repairedUserStability > repairedUserMaxStability){
+      let stabilityFix = await db.pool.query('update players set stability=$1 where player_id=$2',[repairedUserMaxStability,data.repairedUserId]);
+      data.repairingAmount = repairedUserStability-repairedUserMaxStability;
+    }
+    // Repairing done. Time to send back responses
+    // First, update info for users
+    // Update info of repaired player
+    if(data.repairedUserId === data.repairingUserId){
+      db.getPlayerInfoAndEmitToSocketId(nsp,repairedUserSocketId,data.repairedUserName);
+      // Update info of all connected users to the zone
+      db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
+      // Then to user that repaired
+      socket.emit('consoleMessage','You have repaired yourself for '+data.repairingAmount+' SP points.');
+      // Then to local chat . For now.
+      nsp.emit('localChatMessage',data.repairingUserName+' has repaired itself for '+data.repairingAmount+' SP points.');
+    }else{
+      db.getPlayerInfoAndEmitToSocketId(nsp,repairedUserSocketId,data.repairedUserName);
+      // Update info of all connected users to the zone
+      db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
+      // Second, send the message to the receiver of the repairing
+      nsp.to(repairedUserSocketId).emit('consoleMessage',data.repairingUserName+' has repaired you for '+data.repairingAmount+' SP points.');
+      // Then to user that repaired
+      socket.emit('consoleMessage','You have repaired '+data.repairedUserName+' for '+data.repairingAmount+' SP points.');
+      // Then to local chat . For now.
+      nsp.emit('localChatMessage',data.repairingUserName+' has repaired '+data.repairedUserName+' for '+data.repairingAmount+' SP points.');
+    }
+
+  })().catch(err=>console.log(err));
+}
+
 module.exports = {
-  attackUser:attackUser
+  attackUser:attackUser,
+  repairUser:repairUser
 }

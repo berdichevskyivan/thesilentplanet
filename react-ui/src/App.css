@@ -82,8 +82,22 @@ p {
 }
 
 .CurrentPlayers, .OtherZones {
-  height: 95%;
+  height: 45%;
   background: #000000a8;
+  color: lime;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.LocalChatRow {
+  height: 50%;
+  color: lime;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.GlobalChatRow {
+  height: 50%;
   color: lime;
   width: 100%;
   margin: 0 !important;
@@ -179,10 +193,10 @@ p {
 
 * { margin: 0; padding: 0; box-sizing: border-box; }
 body { font: 13px Helvetica, Arial; }
-input { border: 0; height: 100%; padding-left:10px; float:left ; width: 80%; background: #000000a8; color: lime; font-family: monospace !important; font-size: 14px !important; outline: none;}
+input { border: 0; height: 100%; width: 100%; padding-left:10px; float:left ; background: #000000a8; color: lime; font-family: monospace !important; font-size: 14px !important; outline: none;}
 button { float:right; background: #000000a8; color: lime; border: none; padding: 10px; width: 20% ; height: 100%; cursor: pointer; outline: none; border-left:1px solid lime; font-size: 18px; font-family: monospace !important;}
 #consoleMessages, #localChatMessages, #globalChatMessages { list-style-type: none; margin: 0; padding-top: 4px; padding-left:2px; padding-bottom: 2px; height: 100%; overflow: auto; background: #000000a8}
-#consoleMessages li, #localChatMessages li, #globalChatMessages li { padding: 0px 10px; color: lime; font-family: monospace; font-size: 14px}
+#consoleMessages li, #localChatMessages li, #globalChatMessages li { padding: 0px 5px; color: lime; font-family: monospace; font-size: 14px}
 
 #consoleMessages, #localChatMessages, #globalChatMessages, .Equipment ul, .Items ul {
     overflow-y: scroll !important;
@@ -192,6 +206,58 @@ button { float:right; background: #000000a8; color: lime; border: none; padding:
 #consoleMessages::-webkit-scrollbar, #localChatMessages::-webkit-scrollbar, #globalChatMessages::-webkit-scrollbar, .Equipment ul::-webkit-scrollbar, .Items ul::-webkit-scrollbar { /* WebKit */
     width: 0;
     height: 0;
+}
+
+p#localChatTitle, p#globalChatTitle{
+  text-align: center;
+  color: lime;
+  font-family: monospace;
+  font-weight: bold;
+  width: 100%;
+  height: 10%;
+  background: #000000a8;
+  border-top: 1px solid lime;
+  border-bottom: 1px solid lime;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+#globalChatMessages, #localChatMessages {
+  height: 80%;
+  width: 100%;
+}
+
+#globalChatMessages li, #localChatMessages li, .globalChatInput input,  .localChatInput input{
+  font-size: 13px !important;
+}
+
+#localChatMessages {
+  padding-left: 15px;
+}
+
+.inputBox {
+  height: 15%;
+  width: 100%;
+  padding-left:0px;
+}
+
+.notConsoleInputBox {
+  height: 10% !important;
+}
+
+.localChatInput {
+  padding-left: 12px;
+}
+
+.localChatInput input {
+  padding-right: 5px;
+}
+
+.globalChatInput input {
+  margin-top: 1px;
+  padding-left: 10px;
+  padding-right: 10px;
 }
 
 .equipmentTab { border-left:none !important; }
