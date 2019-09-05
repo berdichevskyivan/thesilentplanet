@@ -1,6 +1,6 @@
 const db = require('./dbcontroller.js');
 
-const initializeTradingWithNpc = (data,socket,nsp,mobsInZone)=>{
+const initializeTradingWithNpc = (data,socket,nsp,mobsInZone,usersInZone)=>{
   // 1) Check if User has enough currency
   db.pool.query('select currency from players where player_id=$1',[data.playerId],(err,res)=>{
     if(err){
@@ -68,7 +68,7 @@ const initializeTradingWithNpc = (data,socket,nsp,mobsInZone)=>{
           nsp.emit('generateZoneNpc',mobsInZone);
           db.getPlayerInfoAndEmit(socket);
           db.getPlayerItemsAndEmit(socket);
-
+          db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
           console.log(playerCurrencyUpdateResult);
         })().catch(err=>{
           console.log(err);

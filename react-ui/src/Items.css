@@ -29,7 +29,7 @@
 }
 
 .Items ul li p#itemName {
-  width: 40%;
+  width: 50%;
   text-align: center;
   cursor:pointer;
   margin-left: 10px !important;

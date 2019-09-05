@@ -524,6 +524,7 @@ class App extends React.Component {
   }
 
   handleOpenTradeWithNpcModal = (tradedItems)=>{
+    console.log(tradedItems);
     if(tradedItems!==false){
       this.setState({
         itemsBeingTraded:tradedItems,
@@ -782,6 +783,35 @@ class App extends React.Component {
 
   }
 
+  stealFromUser = (robbedUserName,robbedUserId)=>{
+    let robbingUserId = this.state.playerInfo.player_id;
+    let robbingUserName = this.state.playerInfo.player_name;
+    let robbingAmount = 1;
+    // You CAN'T rob yourself
+    if(robbedUserId===robbingUserId){
+      this.socket.emit('consoleMessage','You can\'t rob yourself.');
+    }else{
+      //Check if user has 0 currency
+      let usersInZone = this.state.usersInZone;
+      for(let i = 0 ; i < usersInZone.length ; i++ ){
+        if(usersInZone[i].player_id===robbedUserId){
+          if(usersInZone[i].currency < 1){
+            this.socket.emit('consoleMessage','Unit doesn\'t have any currency.');
+            return false;
+          }
+        }
+      }
+      this.zoneSocket.emit('stealFromUser',{
+        robbingUserId:robbingUserId,
+        robbingUserName:robbingUserName,
+        robbingAmount:robbingAmount,
+        robbedUserId:robbedUserId,
+        robbedUserName:robbedUserName
+      });
+    }
+
+  }
+
   render(){
 
     const rowOrColumn = this.state.npcInZone.length > 3 ? {'flex-flow':'column', 'flex-wrap':'wrap'} : {'flex-flow':'row','flex-wrap':'nowrap'} ;
@@ -936,7 +966,7 @@ class App extends React.Component {
           </div>
         </div>
         <UserContextMenu user={this.state.userInContextMenu} handleShowUserContextMenu={this.handleShowUserContextMenu}
-                         handleHideUserContextMenu={this.handleHideUserContextMenu} attackUser={this.attackUser} repairUser={this.repairUser}/>
+                         handleHideUserContextMenu={this.handleHideUserContextMenu} attackUser={this.attackUser} repairUser={this.repairUser} stealFromUser={this.stealFromUser}/>
         <ItemContextMenu item={this.state.itemInContextMenu} useItem={this.useItem} equipItem={this.equipItem}/>
         <EquipmentContextMenu equipment={this.state.equipmentInContextMenu} unequipItem={this.unequipItem}/>
       </div>

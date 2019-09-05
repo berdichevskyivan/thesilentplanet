@@ -63,7 +63,7 @@ const attackUser = (nsp,socket,data,usersInZone)=>{
       }else{
         //attacked player has currency
         //update attacking player currency
-        let updateAttackingPlayerCurrency = db.pool.query('update players set currency=currency+$1 where player_id=$2',[currency,data.attackingUserId]);
+        let updateAttackingPlayerCurrency = await db.pool.query('update players set currency=currency+$1 where player_id=$2',[currency,data.attackingUserId]);
         socket.emit('consoleMessage','You looted '+currency+' currency from '+data.attackedUserName+'.');
       }
       //Now erase attacked player from the face of Earth
@@ -131,7 +131,47 @@ const repairUser = (nsp,socket,data,usersInZone)=>{
   })().catch(err=>console.log(err));
 }
 
+const stealFromUser = (nsp,socket,data,usersInZone)=>{
+  (async ()=>{
+    let robbedUserSocketId;
+    //Search for the socket_id of Robbed user in UsersInZone array
+    for(let i = 0 ; i < usersInZone.length ; i++){
+      if(usersInZone[i].username === data.robbedUserName){
+        robbedUserSocketId = usersInZone[i].socketId;
+      }
+    }
+    // Rob the other user
+    // First check how much currency the robbedUser has. You can't steal more than what the user has
+    let checkCurrencyOfRobbedPlayer = await db.pool.query('select currency from players where player_id=$1',[data.robbedUserId]);
+    let robbedPlayerCurrency = parseInt(checkCurrencyOfRobbedPlayer.rows[0].currency);
+    // If the robbed player currency is LESS than the amount being robbed, just rob the PLAYER CURRENCY (same amount)
+    if(robbedPlayerCurrency<data.robbingAmount){
+      data.robbingAmount = robbedPlayerCurrency;
+    }
+    // Then deduct his currency
+    // Then , increase yours
+    let deductRobbedUser = await db.pool.query('update players set currency=currency-$1 where player_id=$2',[data.robbingAmount,data.robbedUserId]);
+    let increaseYourCurrency = await db.pool.query('update players set currency=currency+$1 where player_id=$2',[data.robbingAmount,data.robbingUserId]);
+    // Stealing done. Transmit back
+    // First send back information to Users
+    // to robbed user
+    db.getPlayerInfoAndEmitToSocketId(nsp,robbedUserSocketId,data.robbedUserName);
+    // to robbing user
+    db.getPlayerInfoAndEmit(socket);
+    // to other users
+    db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
+    // Then to the robbed user
+    socket.emit('consoleMessage','You have stolen '+data.robbingAmount+' currency from '+data.robbedUserName+'.');
+    // Then to the robbing user
+    nsp.to(robbedUserSocketId).emit('consoleMessage',data.robbingUserName+' stole '+data.robbingAmount+' currency from you.');
+    // Then to Local Chat
+    nsp.emit('localChatMessage',data.robbingUserName+' stole '+data.robbingAmount+' from '+data.robbedUserName+'.');
+    // Should be it in theory
+  })().catch(err=>console.log(err));
+}
+
 module.exports = {
   attackUser:attackUser,
-  repairUser:repairUser
+  repairUser:repairUser,
+  stealFromUser:stealFromUser
 }

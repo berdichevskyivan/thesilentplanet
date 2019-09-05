@@ -60,7 +60,7 @@ const TradeWithNpcModal = (props)=>{
                   <input type="text" maxlength={3} value={itemBeingTraded.amount_wanted} onChange={(e)=>props.handleChangeAmountWanted(e,itemBeingTraded.item_id)} />
                 </div>
                 <div className="col-md-3 col-sm-2 ItemBeingTradedColumn">
-                  <p>{itemBeingTraded.total_price}</p>
+                  <p>{itemBeingTraded.total_price} ({itemBeingTraded.item_cost})</p>
                 </div>
               </div>
             }) }

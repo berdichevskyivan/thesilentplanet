@@ -248,7 +248,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
     });
 
     socket.on('tradeWithNpc',function(data){
-      tradeController.initializeTradingWithNpc(data,socket,nsp,mobsInZone);
+      tradeController.initializeTradingWithNpc(data,socket,nsp,mobsInZone,usersInZone);
     });
 
     socket.on('collectResource',function(data){
@@ -279,6 +279,10 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
 
     socket.on('repairUser',(data)=>{
       combatController.repairUser(nsp,socket,data,usersInZone);
+    });
+
+    socket.on('stealFromUser',(data)=>{
+      combatController.stealFromUser(nsp,socket,data,usersInZone);
     });
 
     //LOCAL
