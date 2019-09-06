@@ -251,6 +251,7 @@ class App extends React.Component {
               if(this.state.userIsHacking){
                 data.player_id = this.state.hackedUserId;
                 data.player_name = this.state.hackedUserName;
+                data.attack_power = this.state.hackedUserAttackPower;
               }
               this.setState({
                 playerInfo:data
