@@ -66,9 +66,7 @@ class App extends React.Component {
       tradeSent:false,
       craftSent:false,
       userIsHacking:false,
-      hackedUserName:'',
-      hackedUserId:null,
-      hackedUserAttackPower:null,
+      hackingUserId:null,
       tradeResponse:'',
       craftResponse:'',
       userInContextMenu:'',
@@ -131,7 +129,7 @@ class App extends React.Component {
       this.setState({localChatMessages:[],localChatInputMessage:''});
       return false;
     }
-    message = '['+this.state.playerName+'] '+this.state.localChatInputMessage;
+    message = '['+this.state.playerInfo.player_name+'] '+this.state.localChatInputMessage;
     this.zoneSocket.emit('localChatMessage',message);
     this.setState({
       localChatInputMessage:''
@@ -148,7 +146,7 @@ class App extends React.Component {
       this.setState({globalChatMessages:[],globalChatInputMessage:''});
       return false;
     }
-    message = '['+this.state.playerName+'] '+this.state.globalChatInputMessage;
+    message = '['+this.state.playerInfo.player_name+'] '+this.state.globalChatInputMessage;
     this.socket.emit('globalChatMessage',message);
     this.setState({
       globalChatInputMessage:''
@@ -188,11 +186,6 @@ class App extends React.Component {
           socket.emit('getPlayerInformation');
 
           socket.on('getPlayerInformation',(data)=>{
-            if(this.state.userIsHacking){
-              data.player_id = this.state.hackedUserId;
-              data.player_name = this.state.hackedUserName;
-              data.attack_power = this.state.hackedUserAttackPower;
-            }
             this.setState({
               playerInfo:data,
               zoneVideoUrl:data.zone_video_url
@@ -215,6 +208,13 @@ class App extends React.Component {
               })
 
             });
+
+            zoneSocket.on('hackUser',(data)=>{
+              this.setState({
+                userIsHacking:false,
+                hackingUserId:null
+              });
+            })
 
             zoneSocket.on('usersInZone',(data)=>{
               this.setState({
@@ -248,11 +248,6 @@ class App extends React.Component {
             });
 
             zoneSocket.on('getPlayerInformation',(data)=>{
-              if(this.state.userIsHacking){
-                data.player_id = this.state.hackedUserId;
-                data.player_name = this.state.hackedUserName;
-                data.attack_power = this.state.hackedUserAttackPower;
-              }
               this.setState({
                 playerInfo:data
               });
@@ -758,7 +753,7 @@ class App extends React.Component {
   attackUser = (attackedUserName,attackedUserId)=>{
     let attackingUserId = this.state.playerInfo.player_id;
     let attackingUserName = this.state.playerInfo.player_name;
-    let attackingUserPower = this.state.hackedUserAttackPower === null ? this.state.playerInfo.attack_power : this.state.hackedUserAttackPower;
+    let attackingUserPower = this.state.playerInfo.attack_power;
     if(attackedUserId===attackingUserId){
       this.socket.emit('consoleMessage','You can\'t attack yourself.');
     }else{
@@ -768,7 +763,8 @@ class App extends React.Component {
         attackingUserPower:attackingUserPower,
         attackedUserId:attackedUserId,
         attackedUserName:attackedUserName,
-        userIsHacking:this.state.userIsHacking
+        userIsHacking:this.state.userIsHacking,
+        hackingUserId:this.state.hackingUserId
       });
     }
   }
@@ -794,7 +790,8 @@ class App extends React.Component {
       repairingAmount:repairingAmount,
       repairedUserId:repairedUserId,
       repairedUserName:repairedUserName,
-      userIsHacking:this.state.userIsHacking
+      userIsHacking:this.state.userIsHacking,
+      hackingUserId:this.state.hackingUserId
     });
 
   }
@@ -823,57 +820,35 @@ class App extends React.Component {
         robbingAmount:robbingAmount,
         robbedUserId:robbedUserId,
         robbedUserName:robbedUserName,
-        userIsHacking:this.state.userIsHacking
+        userIsHacking:this.state.userIsHacking,
+        hackingUserId:this.state.hackingUserId
       });
     }
 
   }
 
-  hackUser = (hackedUserName,hackedUserId,hackedUserAttackPower)=>{
+  hackUser = (hackedUserName,hackedUserId)=>{
     let hackingUserId = this.state.playerInfo.player_id;
     let hackingUserName = this.state.playerInfo.player_name;
-    let hackingUserAttackPower = this.state.playerInfo.attack_power;
     let hackingTime = 5000;
     // You CAN'T hack yourself
     if(hackedUserId===hackingUserId){
       this.socket.emit('consoleMessage','You can\'t hack yourself.');
+    }else if(hackedUserId===this.state.hackingUserId){
+      this.socket.emit('consoleMessage','You can\'t hack yourself back.');
     }else{
-      //update playerInfo
-      let newPlayerInfo = this.state.playerInfo;
-      newPlayerInfo.player_id = hackedUserId;
-      newPlayerInfo.player_name = hackedUserName;
-      newPlayerInfo.attack_power = hackedUserAttackPower;
       this.setState({
-        playerInfo:newPlayerInfo,
         userIsHacking:true,
-        hackedUserId:hackedUserId,
-        hackedUserName:hackedUserName,
-        hackedUserAttackPower:hackedUserAttackPower
+        hackingUserId:hackingUserId
       },()=>{
-        setTimeout(()=>{
-          let oldPlayerInfo = this.state.playerInfo;
-          oldPlayerInfo.player_id = hackingUserId;
-          oldPlayerInfo.player_name = hackingUserName;
-          oldPlayerInfo.attack_power = hackingUserAttackPower;
-          this.setState({
-            playerInfo:oldPlayerInfo,
-            userIsHacking:false,
-            hackedUserId:null,
-            hackedUserName:'',
-            hackedUserAttackPower:null
-          });
-          this.socket.emit('consoleMessage','Hacking ended.');
-        },hackingTime);
+        this.zoneSocket.emit('hackUser',{
+          hackingUserId:hackingUserId,
+          hackingUserName:hackingUserName,
+          hackingTime:hackingTime,
+          hackedUserId:hackedUserId,
+          hackedUserName:hackedUserName,
+        })
       });
-      this.socket.emit('consoleMessage','You\'ve hacked into '+hackedUserName+' for '+(hackingTime/1000)+' seconds.');
-      this.zoneSocket.emit('localChatMessage',hackingUserName+' has hacked into '+hackedUserName+'.');
-      this.zoneSocket.emit('hackUser',{
-        hackingUserId:hackingUserId,
-        hackingUserName:hackingUserName,
-        hackingTime:hackingTime,
-        hackedUserId:hackedUserId,
-        hackedUserName:hackedUserName,
-      })
     }
 
   }

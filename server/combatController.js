@@ -21,16 +21,12 @@ const attackUser = (nsp,socket,data,usersInZone)=>{
       //Emit User list after this
       db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
       nsp.to(attackedUserSocketId).emit('consoleMessage',data.attackingUserName+' has attacked you for '+data.attackingUserPower+' damage.');
-      if(!data.userIsHacking){
-        socket.emit('consoleMessage','You attacked '+data.attackedUserName+ ' for '+data.attackingUserPower+' damage.');
-      }
+      socket.emit('consoleMessage','You attacked '+data.attackedUserName+ ' for '+data.attackingUserPower+' damage.');
       nsp.emit('localChatMessage',data.attackingUserName+' has attacked '+data.attackedUserName+ ' for '+data.attackingUserPower+' damage.');
       // Tell everybody attacking user is looting attacked user
       nsp.to(attackedUserSocketId).emit('consoleMessage',data.attackingUserName+' has killed you and looted your items and currency.');
       nsp.emit('localChatMessage',data.attackingUserName+' has killed '+data.attackedUserName+ ' and looted all his items and currency.');
-      if(!data.userIsHacking){
-        socket.emit('consoleMessage','You killed '+data.attackedUserName+'.');
-      }
+      socket.emit('consoleMessage','You killed '+data.attackedUserName+'.');
       // Send death signal to attacked User
       nsp.to(attackedUserSocketId).emit('consoleMessage','You died.');
       nsp.to(attackedUserSocketId).emit('consoleMessage','Reuploading consciousness into new host...');
@@ -54,29 +50,21 @@ const attackUser = (nsp,socket,data,usersInZone)=>{
         }
         //Done looting items
         responseMessage = responseMessage.slice(0, -2) + ' from '+data.attackedUserName+'.';
-        if(!data.userIsHacking){
-          socket.emit('consoleMessage',responseMessage);
-        }
+        socket.emit('consoleMessage',responseMessage);
       }else{
         //no loot
-        if(!data.userIsHacking){
-          socket.emit('consoleMessage',data.attackedUserName+ ' dropped no loot.');
-        }
+        socket.emit('consoleMessage',data.attackedUserName+ ' dropped no loot.');
       }
       //Now loot currency
       let currency = parseInt(attackedPlayerCurrency.rows[0].currency);
       if(currency<1){
         //attacked player has no currency
-        if(!data.userIsHacking){
-          socket.emit('consoleMessage',data.attackedUserName+ ' dropped no currency.');
-        }
+        socket.emit('consoleMessage',data.attackedUserName+ ' dropped no currency.');
       }else{
         //attacked player has currency
         //update attacking player currency
         let updateAttackingPlayerCurrency = await db.pool.query('update players set currency=currency+$1 where player_id=$2',[currency,data.attackingUserId]);
-        if(!data.userIsHacking){
-          socket.emit('consoleMessage','You looted '+currency+' currency from '+data.attackedUserName+'.');
-        }
+        socket.emit('consoleMessage','You looted '+currency+' currency from '+data.attackedUserName+'.');
       }
       //Now erase attacked player from the face of Earth
       const deletePlayerFromDatabase = await db.pool.query('delete from players where player_id='+stabilityCheck.rows[0].player_id);
@@ -93,7 +81,9 @@ const attackUser = (nsp,socket,data,usersInZone)=>{
       }
       nsp.emit('localChatMessage',data.attackingUserName+' has attacked '+data.attackedUserName+ ' for '+data.attackingUserPower+' damage.');
       db.getPlayerInfoAndEmit(socket);
-      db.getPlayerInfoAndEmitToSocketId(nsp,attackedUserSocketId,data.attackedUserName);
+      if(data.attackedUserId !== data.hackingUserId){
+        db.getPlayerInfoAndEmitToSocketId(nsp,attackedUserSocketId,data.attackedUserName);
+      }
       db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
     }
   })().catch(err=>console.log(err));
@@ -123,25 +113,25 @@ const repairUser = (nsp,socket,data,usersInZone)=>{
     // First, update info for users
     // Update info of repaired player
     if(data.repairedUserId === data.repairingUserId){
-      db.getPlayerInfoAndEmitToSocketId(nsp,repairedUserSocketId,data.repairedUserName);
+      if(data.repairedUserId !== data.hackingUserId){
+        db.getPlayerInfoAndEmitToSocketId(nsp,repairedUserSocketId,data.repairedUserName);
+      }
       // Update info of all connected users to the zone
       db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
       // Then to user that repaired
-      if(!data.userIsHacking){
-        socket.emit('consoleMessage','You have repaired yourself for '+data.repairingAmount+' SP points.');
-      }
+      socket.emit('consoleMessage','You have repaired yourself for '+data.repairingAmount+' SP points.');
       // Then to local chat . For now.
       nsp.emit('localChatMessage',data.repairingUserName+' has repaired itself for '+data.repairingAmount+' SP points.');
     }else{
-      db.getPlayerInfoAndEmitToSocketId(nsp,repairedUserSocketId,data.repairedUserName);
+      if(data.repairedUserId !== data.hackingUserId){
+        db.getPlayerInfoAndEmitToSocketId(nsp,repairedUserSocketId,data.repairedUserName);
+      }
       // Update info of all connected users to the zone
       db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
       // Second, send the message to the receiver of the repairing
       nsp.to(repairedUserSocketId).emit('consoleMessage',data.repairingUserName+' has repaired you for '+data.repairingAmount+' SP points.');
       // Then to user that repaired
-      if(!data.userIsHacking){
-        socket.emit('consoleMessage','You have repaired '+data.repairedUserName+' for '+data.repairingAmount+' SP points.');
-      }
+      socket.emit('consoleMessage','You have repaired '+data.repairedUserName+' for '+data.repairingAmount+' SP points.');
       // Then to local chat . For now.
       nsp.emit('localChatMessage',data.repairingUserName+' has repaired '+data.repairedUserName+' for '+data.repairingAmount+' SP points.');
     }
@@ -173,7 +163,9 @@ const stealFromUser = (nsp,socket,data,usersInZone)=>{
     // Stealing done. Transmit back
     // First send back information to Users
     // to robbed user
-    db.getPlayerInfoAndEmitToSocketId(nsp,robbedUserSocketId,data.robbedUserName);
+    if(data.robbedUserId !== data.hackingUserId){
+      db.getPlayerInfoAndEmitToSocketId(nsp,robbedUserSocketId,data.robbedUserName);
+    }
     // to robbing user
     db.getPlayerInfoAndEmit(socket);
     // to other users

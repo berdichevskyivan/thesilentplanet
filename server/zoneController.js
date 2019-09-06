@@ -85,7 +85,6 @@ const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
               console.log('retrieving user from json array...');
               let user = retrieveUserFromZoneUsers(attackingUser,usersInZone);
               if(user){
-                console.log(user);
                 let attackResult = await db.npcAttackUserAndEmit(nsp,user,mobInZone,usersInZone);
                 console.log('this is attackResult');
                 console.log(attackResult);
@@ -131,6 +130,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
   nsp.on('connection',function(socket){
     socket.username = socket.handshake.query.username;
     console.log('User '+socket.username+' has joined '+zoneName);
+    console.log(usersInZone);
     var shouldPush = true;
     for(var i = 0 ; i < usersInZone.length ; i++){
       if(usersInZone[i].username===socket.username){
@@ -286,6 +286,8 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
     });
 
     socket.on('hackUser',(data)=>{
+      socket.emit('consoleMessage','You\'ve hacked into '+data.hackedUserName+' for '+(data.hackingTime/1000)+' seconds.');
+      nsp.emit('localChatMessage',data.hackingUserName+' has hacked into '+data.hackedUserName+'.');
       // Replace socket.username and socket.socketId
       socket.username = data.hackedUserName;
       // Send players info
@@ -298,6 +300,7 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
       //wait a reverse
       setTimeout(()=>{
         socket.username = data.hackingUserName;
+        socket.emit('consoleMessage','Hacking ended.');
         // Send players info
         db.getPlayerInfoAndEmit(socket);
         db.getPlayerEquipmentAndEmit(socket);
@@ -327,7 +330,6 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
         }
       }
       usersInZone.splice(disconnectedId,1);
-      //nsp.emit('usersInZone',usersInZone);
       db.getUsersInZoneInfoAndEmit(nsp,usersInZone);
     });
 
