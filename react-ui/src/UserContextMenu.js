@@ -10,7 +10,7 @@ const UserContextMenu = (props)=>{
        <Item onClick={()=>{props.attackUser(props.user.username,props.user.player_id)}} >Attack</Item>
        <Item onClick={()=>{props.repairUser(props.user.username,props.user.player_id)}}>Repair</Item>
        <Item onClick={()=>{props.stealFromUser(props.user.username,props.user.player_id)}}>Steal</Item>
-       <Item onClick={()=>{console.log('i was clicked')}}>Hack</Item>
+       <Item onClick={()=>{props.hackUser(props.user.username,props.user.player_id,props.user.attack_power)}}>Hack</Item>
        <Item onClick={()=>{console.log('i was clicked')}}>Trade</Item>
     </Menu>
   );

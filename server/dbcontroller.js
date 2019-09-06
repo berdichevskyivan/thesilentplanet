@@ -1,15 +1,15 @@
 const { Client, Pool } = require('pg');
 
-//For local dev
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL
-});
-
-// // For heroku
+// //For local dev
 // const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL,
-//   ssl:true
+//   connectionString: process.env.DATABASE_URL
 // });
+
+// For heroku
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL,
+  ssl:true
+});
 
 var genID = function guidGenerator() {
     var S4 = function() {
@@ -380,11 +380,12 @@ const getUsersInZoneInfoAndEmit = (nsp,usersInZone)=>{
   (async ()=>{
     //need to loop usersInZone and assign at the very least stability and max_stability
     for(let i = 0 ; i < usersInZone.length ; i++ ){
-      let assignStability = await pool.query('select stability,max_stability,currency,player_id from players where player_name=$1',[usersInZone[i].username]);
+      let assignStability = await pool.query('select stability,max_stability,currency,attack_power,player_id from players where player_name=$1',[usersInZone[i].username]);
       usersInZone[i].stability = assignStability.rows[0].stability;
       usersInZone[i].max_stability = assignStability.rows[0].max_stability;
       usersInZone[i].player_id = assignStability.rows[0].player_id;
       usersInZone[i].currency = assignStability.rows[0].currency;
+      usersInZone[i].attack_power = assignStability.rows[0].attack_power;
     }
     //Now I can send it back
     nsp.emit('usersInZone',usersInZone);

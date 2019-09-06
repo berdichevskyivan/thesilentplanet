@@ -65,6 +65,10 @@ class App extends React.Component {
       itemBeingCrafted:[],
       tradeSent:false,
       craftSent:false,
+      userIsHacking:false,
+      hackedUserName:'',
+      hackedUserId:null,
+      hackedUserAttackPower:null,
       tradeResponse:'',
       craftResponse:'',
       userInContextMenu:'',
@@ -184,6 +188,11 @@ class App extends React.Component {
           socket.emit('getPlayerInformation');
 
           socket.on('getPlayerInformation',(data)=>{
+            if(this.state.userIsHacking){
+              data.player_id = this.state.hackedUserId;
+              data.player_name = this.state.hackedUserName;
+              data.attack_power = this.state.hackedUserAttackPower;
+            }
             this.setState({
               playerInfo:data,
               zoneVideoUrl:data.zone_video_url
@@ -239,6 +248,10 @@ class App extends React.Component {
             });
 
             zoneSocket.on('getPlayerInformation',(data)=>{
+              if(this.state.userIsHacking){
+                data.player_id = this.state.hackedUserId;
+                data.player_name = this.state.hackedUserName;
+              }
               this.setState({
                 playerInfo:data
               });
@@ -744,7 +757,7 @@ class App extends React.Component {
   attackUser = (attackedUserName,attackedUserId)=>{
     let attackingUserId = this.state.playerInfo.player_id;
     let attackingUserName = this.state.playerInfo.player_name;
-    let attackingUserPower = this.state.playerInfo.attack_power;
+    let attackingUserPower = this.state.hackedUserAttackPower === null ? this.state.playerInfo.attack_power : this.state.hackedUserAttackPower;
     if(attackedUserId===attackingUserId){
       this.socket.emit('consoleMessage','You can\'t attack yourself.');
     }else{
@@ -753,7 +766,8 @@ class App extends React.Component {
         attackingUserName:attackingUserName,
         attackingUserPower:attackingUserPower,
         attackedUserId:attackedUserId,
-        attackedUserName:attackedUserName
+        attackedUserName:attackedUserName,
+        userIsHacking:this.state.userIsHacking
       });
     }
   }
@@ -778,7 +792,8 @@ class App extends React.Component {
       repairingUserName:repairingUserName,
       repairingAmount:repairingAmount,
       repairedUserId:repairedUserId,
-      repairedUserName:repairedUserName
+      repairedUserName:repairedUserName,
+      userIsHacking:this.state.userIsHacking
     });
 
   }
@@ -806,8 +821,58 @@ class App extends React.Component {
         robbingUserName:robbingUserName,
         robbingAmount:robbingAmount,
         robbedUserId:robbedUserId,
-        robbedUserName:robbedUserName
+        robbedUserName:robbedUserName,
+        userIsHacking:this.state.userIsHacking
       });
+    }
+
+  }
+
+  hackUser = (hackedUserName,hackedUserId,hackedUserAttackPower)=>{
+    let hackingUserId = this.state.playerInfo.player_id;
+    let hackingUserName = this.state.playerInfo.player_name;
+    let hackingUserAttackPower = this.state.playerInfo.attack_power;
+    let hackingTime = 5000;
+    // You CAN'T hack yourself
+    if(hackedUserId===hackingUserId){
+      this.socket.emit('consoleMessage','You can\'t hack yourself.');
+    }else{
+      //update playerInfo
+      let newPlayerInfo = this.state.playerInfo;
+      newPlayerInfo.player_id = hackedUserId;
+      newPlayerInfo.player_name = hackedUserName;
+      newPlayerInfo.attack_power = hackedUserAttackPower;
+      this.setState({
+        playerInfo:newPlayerInfo,
+        userIsHacking:true,
+        hackedUserId:hackedUserId,
+        hackedUserName:hackedUserName,
+        hackedUserAttackPower:hackedUserAttackPower
+      },()=>{
+        setTimeout(()=>{
+          let oldPlayerInfo = this.state.playerInfo;
+          oldPlayerInfo.player_id = hackingUserId;
+          oldPlayerInfo.player_name = hackingUserName;
+          oldPlayerInfo.attack_power = hackingUserAttackPower;
+          this.setState({
+            playerInfo:oldPlayerInfo,
+            userIsHacking:false,
+            hackedUserId:null,
+            hackedUserName:'',
+            hackedUserAttackPower:null
+          });
+          this.socket.emit('consoleMessage','Hacking ended.');
+        },hackingTime);
+      });
+      this.socket.emit('consoleMessage','You\'ve hacked into '+hackedUserName+' for '+(hackingTime/1000)+' seconds.');
+      this.zoneSocket.emit('localChatMessage',hackingUserName+' has hacked into '+hackedUserName+'.');
+      this.zoneSocket.emit('hackUser',{
+        hackingUserId:hackingUserId,
+        hackingUserName:hackingUserName,
+        hackingTime:hackingTime,
+        hackedUserId:hackedUserId,
+        hackedUserName:hackedUserName,
+      })
     }
 
   }
@@ -966,7 +1031,7 @@ class App extends React.Component {
           </div>
         </div>
         <UserContextMenu user={this.state.userInContextMenu} handleShowUserContextMenu={this.handleShowUserContextMenu}
-                         handleHideUserContextMenu={this.handleHideUserContextMenu} attackUser={this.attackUser} repairUser={this.repairUser} stealFromUser={this.stealFromUser}/>
+                         handleHideUserContextMenu={this.handleHideUserContextMenu} attackUser={this.attackUser} repairUser={this.repairUser} stealFromUser={this.stealFromUser} hackUser={this.hackUser} />
         <ItemContextMenu item={this.state.itemInContextMenu} useItem={this.useItem} equipItem={this.equipItem}/>
         <EquipmentContextMenu equipment={this.state.equipmentInContextMenu} unequipItem={this.unequipItem}/>
       </div>

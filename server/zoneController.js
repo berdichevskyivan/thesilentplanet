@@ -48,7 +48,7 @@ const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
       db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
       mobCount++;
     }
-  },110000);
+  },60000);
 };
 
 const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=>{
@@ -60,7 +60,7 @@ const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=
       db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
       resourceCount++;
     }
-  },200000);
+  },30000);
 };
 
 const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
@@ -283,6 +283,29 @@ const onConnectionToZoneNsp = (nsp,db,mobsInZone,resourcesInZone,zoneId,usersInZ
 
     socket.on('stealFromUser',(data)=>{
       combatController.stealFromUser(nsp,socket,data,usersInZone);
+    });
+
+    socket.on('hackUser',(data)=>{
+      // Replace socket.username and socket.socketId
+      socket.username = data.hackedUserName;
+      // Send players info
+      db.getPlayerInfoAndEmit(socket);
+      db.getPlayerEquipmentAndEmit(socket);
+      db.getPlayerResourcesAndEmit(socket);
+      db.getPlayerItemsAndEmit(socket);
+      db.getPlayerBlueprintsAndEmit(socket);
+      db.getOtherZonesAndEmit(socket);
+      //wait a reverse
+      setTimeout(()=>{
+        socket.username = data.hackingUserName;
+        // Send players info
+        db.getPlayerInfoAndEmit(socket);
+        db.getPlayerEquipmentAndEmit(socket);
+        db.getPlayerResourcesAndEmit(socket);
+        db.getPlayerItemsAndEmit(socket);
+        db.getPlayerBlueprintsAndEmit(socket);
+        db.getOtherZonesAndEmit(socket);
+      },data.hackingTime);
     });
 
     //LOCAL
