@@ -40,27 +40,23 @@ const initializeZones = (io)=>{
 }
 
 const mobSpawn = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
-  db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
-  mobCount++;
   setInterval(()=>{
     if(usersInZone.length>0 && mobsInZone.length<5){
       console.log('Generating Mob for Zone '+zoneId);
       db.getNpcFromZoneAndEmit(zoneId,nsp,mobsInZone,mobCount);
       mobCount++;
     }
-  },60000);
+  },10000);
 };
 
 const resourceSpawn = (db,nsp,resourcesInZone,resourceCount,zoneId,usersInZone)=>{
-  db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
-  resourceCount++;
   setInterval(()=>{
     if(usersInZone.length>0 && resourcesInZone.length<10){
       console.log('Generating Resource for Zone '+zoneId);
       db.getResourceFromZoneAndEmit(zoneId,nsp,resourcesInZone,resourceCount);
       resourceCount++;
     }
-  },30000);
+  },7000);
 };
 
 const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
@@ -106,7 +102,7 @@ const npcAttack = (db,nsp,mobsInZone,mobCount,zoneId,usersInZone)=>{
           nsp.emit('generateZoneNpc',mobsInZone);
         })().catch(err=>console.log(err));
     }
-  },5000);
+  },3000);
 };
 
 const retrieveUserFromZoneUsers = (username,usersInZone)=>{

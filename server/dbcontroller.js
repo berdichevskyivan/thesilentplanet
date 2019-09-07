@@ -1,15 +1,18 @@
 const { Client, Pool } = require('pg');
 
-// //For local dev
-// const pool = new Pool({
-//   connectionString: process.env.DATABASE_URL
-// });
-
-// For heroku
-const pool = new Pool({
-  connectionString: process.env.DATABASE_URL,
-  ssl:true
-});
+let pool = null;
+if(process.env.DATABASE_URL.includes('localhost')){
+  //For local dev
+   pool = new Pool({
+    connectionString: process.env.DATABASE_URL
+  });
+}else{
+  // For heroku
+   pool = new Pool({
+    connectionString: process.env.DATABASE_URL,
+    ssl:true
+  });
+}
 
 var genID = function guidGenerator() {
     var S4 = function() {
@@ -64,7 +67,7 @@ const getPlayerResourcesAndEmit = (socket)=>{
 }
 
 const getPlayerItemsAndEmit = (socket)=>{
-  pool.query('select b.*,a.amount from player_items a, items b,players c where a.item_id = b.item_id and a.player_id = c.player_id and c.player_name=$1 and a.amount > 0 order by a.amount desc;',[socket.username],(err,res)=>{
+  pool.query('select b.*,a.amount from player_items a, items b,players c where a.item_id = b.item_id and a.player_id = c.player_id and c.player_name=$1 and a.amount > 0 order by b.item_name asc;',[socket.username],(err,res)=>{
     if(err){
       console.log(err);
     }else{

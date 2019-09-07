@@ -42,6 +42,7 @@ p {
   justify-content: center;
   cursor: pointer;
   font-family: monospace !important;
+  border-left: 1px solid lime;
 }
 
 .tabcolumn:hover {
@@ -49,22 +50,37 @@ p {
   color: white;
 }
 
-.ConsoleBox {
-  overflow: hidden;
-  display: flex;
-  flex-flow: column;
-  height: 100%;
-  width: 50%;
-  margin: 0 auto;
+.chatColumn {
+  border-left: 1px solid lime;
+  border-right: 1px solid lime;
 }
 
-.Tabs {
+.ChatRow {
+  height: 85%;
+  width: 100%;
+  margin: 0 !important;
+}
+
+.Tabs, .ChatTabs {
   height: 15%;
   background:#000000a8;
   color: lime;
   width: 100%;
   margin: 0 !important;
   border-bottom: 1px solid lime;
+}
+
+.Tabs {
+  border-top: 1px solid lime;
+}
+
+.ChatTabs {
+  border-bottom: none;
+  border-top: 1px solid lime;
+}
+
+.ChatTabs .tabcolumn:first-child {
+  border-left:none;
 }
 
 .WorldViewTabs {
@@ -84,7 +100,7 @@ p {
 }
 
 .CurrentPlayers, .OtherZones {
-  height: 42%;
+  height: 95%;
   background: #000000a8;
   color: lime;
   width: 100%;
@@ -192,7 +208,7 @@ p {
 body { font: 13px Helvetica, Arial; }
 input { border: 0; height: 100%; width: 100%; padding-left:10px; float:left ; background: #000000a8; color: lime; font-family: monospace !important; font-size: 14px !important; outline: none;}
 button { float:right; background: #000000a8; color: lime; border: none; padding: 10px; width: 20% ; height: 100%; cursor: pointer; outline: none; border-left:1px solid lime; font-size: 18px; font-family: monospace !important;}
-#consoleMessages, #localChatMessages, #globalChatMessages { list-style-type: none; margin: 0; padding-top: 4px; padding-left:2px; padding-bottom: 2px; height: 100%; overflow: auto; background: #000000a8}
+#consoleMessages, #localChatMessages, #globalChatMessages { list-style-type: none; margin: 0; padding-top: 4px; padding-left:2px; padding-bottom: 2px; height: 85%; width: 100%; overflow: auto; background: #000000a8}
 #consoleMessages li, #localChatMessages li, #globalChatMessages li { padding: 0px 5px; color: lime; font-family: monospace; font-size: 14px}
 
 #consoleMessages, #localChatMessages, #globalChatMessages, .Equipment ul, .Items ul {
@@ -220,7 +236,7 @@ p#localChatTitle, p#globalChatTitle{
 }
 
 #globalChatMessages, #localChatMessages {
-  height: 80%;
+  height: 85%;
   width: 100%;
 }
 
@@ -228,22 +244,14 @@ p#localChatTitle, p#globalChatTitle{
   font-size: 13px !important;
 }
 
-#localChatMessages {
-  padding-left: 15px;
-}
-
 .inputBox {
-  height: 13%;
+  height: 15%;
   width: 100%;
   padding-left:0px;
 }
 
 .notConsoleInputBox {
-  height: 10% !important;
-}
-
-.localChatInput {
-  padding-left: 12px;
+  height: 15% !important;
 }
 
 .localChatInput input {
