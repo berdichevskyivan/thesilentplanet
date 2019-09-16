@@ -23,6 +23,7 @@ import 'bootstrap/dist/css/bootstrap.min.css';
 import connectedPath from './resources/images/ui/connected.png';
 import travellingPath from './resources/images/ui/loadingscreen.gif';
 import { MenuProvider } from 'react-contexify';
+import { withSnackbar } from 'notistack';
 
 class App extends React.Component {
 
@@ -850,7 +851,28 @@ class App extends React.Component {
         })
       });
     }
+  }
 
+  tradeWithUser = (tradeRequestedUserName, tradeRequestedUserId)=>{
+    let tradeRequestingUserId = this.state.playerInfo.player_id;
+    let tradeRequestingName = this.state.playerInfo.player_name;
+
+    const action = (key) => (
+        <React.Fragment>
+        <button id="snackbarButton">
+            {'Accept'}
+        </button>
+        <button id="snackbarButton">
+            {'Decline'}
+        </button>
+        </React.Fragment>
+    );
+
+    const message = 'akitsushima wants to trade with you.';
+
+    this.props.enqueueSnackbar(message, {
+        action,
+    });
   }
 
   render(){
@@ -1012,7 +1034,9 @@ class App extends React.Component {
           </div>
         </div>
         <UserContextMenu user={this.state.userInContextMenu} handleShowUserContextMenu={this.handleShowUserContextMenu}
-                         handleHideUserContextMenu={this.handleHideUserContextMenu} attackUser={this.attackUser} repairUser={this.repairUser} stealFromUser={this.stealFromUser} hackUser={this.hackUser} />
+                         handleHideUserContextMenu={this.handleHideUserContextMenu} attackUser={this.attackUser}
+                         repairUser={this.repairUser} stealFromUser={this.stealFromUser} hackUser={this.hackUser}
+                         tradeWithUser={this.tradeWithUser} />
         <ItemContextMenu item={this.state.itemInContextMenu} useItem={this.useItem} equipItem={this.equipItem}/>
         <EquipmentContextMenu equipment={this.state.equipmentInContextMenu} unequipItem={this.unequipItem}/>
       </div>
@@ -1021,4 +1045,4 @@ class App extends React.Component {
 
 }
 
-export default App;
+export default withSnackbar(App);

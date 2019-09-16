@@ -11,7 +11,7 @@ const UserContextMenu = (props)=>{
        <Item onClick={()=>{props.repairUser(props.user.username,props.user.player_id)}}>Repair</Item>
        <Item onClick={()=>{props.stealFromUser(props.user.username,props.user.player_id)}}>Steal</Item>
        <Item onClick={()=>{props.hackUser(props.user.username,props.user.player_id)}}>Hack</Item>
-       <Item onClick={()=>{console.log('i was clicked')}}>Trade</Item>
+       <Item onClick={()=>{props.tradeWithUser(props.user.username,props.user.player_id)}}>Trade</Item>
     </Menu>
   );
 }

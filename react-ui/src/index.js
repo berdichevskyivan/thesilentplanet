@@ -2,6 +2,7 @@ import React from 'react';
 import ReactDOM from 'react-dom';
 import { Route, BrowserRouter as Router, Switch, IndexRoute } from 'react-router-dom';
 import App from './App';
+import AppWithSnackbar from './AppWithSnackbar';
 import Login from './Login';
 import NotFound from './NotFound';
 import * as serviceWorker from './serviceWorker';
@@ -10,7 +11,7 @@ const routing = (
   <Router>
     <Switch>
       <Route exact path="/" component={ Login } />
-      <Route path="/world" component={ App } />
+      <Route path="/world" component={ AppWithSnackbar } />
       <Route component={ NotFound } />
     </Switch>
   </Router>

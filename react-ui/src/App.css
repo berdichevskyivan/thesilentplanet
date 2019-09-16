@@ -16,6 +16,32 @@ p {
   padding: 0 !important;
 }
 
+.MuiPaper-root {
+  background: #000000e8 !important;
+  color: lime !important;
+  border: 1px solid lime;
+  font-family: monospace !important;
+  font-size: 16px !important;
+}
+
+button#snackbarButton {
+  width: 50%;
+  border: 1px solid lime;
+  margin: 5px;
+  padding: 5px;
+  outline:none !important;
+}
+
+button#snackbarButton:first-child {
+  padding-left: 10px;
+  padding-right: 10px;
+}
+
+button#snackbarButton:hover {
+  color: white;
+  background: green;
+}
+
 .Footer {
   height: 30%;
 }
